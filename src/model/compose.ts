@@ -17,25 +17,25 @@ function glyphsFor(chars: string[]): { glyphs: Glyph[] } | { missing: string } {
   return { glyphs }
 }
 
-/** Build a word exercise from typed text (letters only). */
-export function composeWord(text: string): ComposeResult {
+/** Build a word exercise from typed text (letters only) + an optional emoji. */
+export function composeWord(text: string, emoji?: string): ComposeResult {
   const word = text.trim()
   if (!word) return { ok: false, error: 'Typ een woord.' }
   if (!/^[a-zA-Z]+$/.test(word)) return { ok: false, error: 'Alleen letters (a–z).' }
   const res = glyphsFor([...word])
   if ('missing' in res) return { ok: false, error: `Geen letter voor '${res.missing}'.` }
-  return {
-    ok: true,
-    item: {
-      id: `word-${word.toLowerCase()}`,
-      type: 'word',
-      glyphs: res.glyphs,
-      prompt: word,
-      answer: word,
-      tags: ['woord', 'eigen'],
-      source: 'user',
-    },
+  const item: ContentItem = {
+    id: `word-${word.toLowerCase()}`,
+    type: 'word',
+    glyphs: res.glyphs,
+    prompt: word,
+    answer: word,
+    tags: ['woord', 'eigen'],
+    source: 'user',
   }
+  const trimmedEmoji = emoji?.trim()
+  if (trimmedEmoji) item.image = { kind: 'emoji', value: trimmedEmoji }
+  return { ok: true, item }
 }
 
 /** Build a sum exercise "a op b = result" from operands. */

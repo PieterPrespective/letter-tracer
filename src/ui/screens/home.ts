@@ -50,6 +50,13 @@ function tile(item: ContentItem): HTMLButtonElement {
     drawGlyphsPreview(ctx, item.glyphs, w, h)
   }
   btn.appendChild(canvas)
+  if (item.image?.kind === 'emoji') {
+    const badge = document.createElement('span')
+    badge.className = 'tile-emoji'
+    badge.setAttribute('aria-hidden', 'true')
+    badge.textContent = item.image.value
+    btn.appendChild(badge)
+  }
   return btn
 }
 

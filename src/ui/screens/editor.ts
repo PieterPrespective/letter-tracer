@@ -39,6 +39,7 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
             <input id="word" type="text" placeholder="bijv. kat" autocomplete="off" aria-label="Woord" />
             <button id="addWord" type="button">Toevoegen</button>
           </div>
+          <div class="emoji-picker" id="emojiPicker" role="group" aria-label="Plaatje"></div>
           <p id="wordMsg" class="form-msg" role="status" aria-live="polite"></p>
         </section>
 
@@ -90,8 +91,41 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
 
   const wordInput = $<HTMLInputElement>('#word')
   const wordMsg = $('#wordMsg')
+
+  // Emoji picker (the word's background illustration).
+  const EMOJIS = ['🐱', '🐶', '🐵', '🐟', '🐰', '🐻', '🦋', '🌳', '🌙', '🌸', '🌹', '⭐', '🍎', '🚗', '🏠', '⚽', '🎈', '☀️']
+  let selectedEmoji = ''
+  const picker = $<HTMLDivElement>('#emojiPicker')
+  function paintPicker() {
+    for (const b of picker.querySelectorAll<HTMLButtonElement>('button')) {
+      b.classList.toggle('active', (b.dataset.emoji ?? '') === selectedEmoji)
+    }
+  }
+  {
+    const none = document.createElement('button')
+    none.type = 'button'
+    none.dataset.emoji = ''
+    none.textContent = '—'
+    none.setAttribute('aria-label', 'Geen plaatje')
+    picker.appendChild(none)
+    for (const e of EMOJIS) {
+      const b = document.createElement('button')
+      b.type = 'button'
+      b.dataset.emoji = e
+      b.textContent = e
+      picker.appendChild(b)
+    }
+  }
+  picker.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button')
+    if (!b) return
+    selectedEmoji = b.dataset.emoji ?? ''
+    paintPicker()
+  })
+  paintPicker()
+
   async function addWord() {
-    const r = composeWord(wordInput.value)
+    const r = composeWord(wordInput.value, selectedEmoji)
     if (!r.ok) {
       wordMsg.textContent = r.error
       wordMsg.classList.remove('good')
@@ -101,6 +135,8 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
     wordMsg.textContent = `"${r.item.prompt}" toegevoegd`
     wordMsg.classList.add('good')
     wordInput.value = ''
+    selectedEmoji = ''
+    paintPicker()
   }
   $('#addWord').addEventListener('click', addWord)
   wordInput.addEventListener('keydown', (e) => {
@@ -139,7 +175,8 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
       const label = document.createElement('button')
       label.className = 'link'
       label.type = 'button'
-      label.textContent = item.type === 'sum' ? `${item.prompt} ${item.answer}` : item.prompt
+      const emoji = item.image?.kind === 'emoji' ? `${item.image.value} ` : ''
+      label.textContent = item.type === 'sum' ? `${item.prompt} ${item.answer}` : `${emoji}${item.prompt}`
       label.addEventListener('click', () => prefill(item))
       const del = document.createElement('button')
       del.className = 'round small'
@@ -157,6 +194,8 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
   function prefill(item: ContentItem) {
     if (item.type === 'word') {
       wordInput.value = item.prompt
+      selectedEmoji = item.image?.kind === 'emoji' ? item.image.value : ''
+      paintPicker()
       wordInput.focus()
     } else if (item.type === 'sum' && item.sum) {
       sumA.value = String(item.sum.a)

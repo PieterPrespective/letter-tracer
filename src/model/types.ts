@@ -25,6 +25,11 @@ export interface Glyph {
 
 export type ContentType = 'letter' | 'number' | 'word' | 'sum'
 
+/** An optional picture of a word's meaning, shown behind the tracing. */
+export type WordImage =
+  | { kind: 'emoji'; value: string }
+  | { kind: 'dataurl'; value: string }
+
 /** A traceable exercise: one or more glyphs laid left-to-right. */
 export interface ContentItem {
   id: string
@@ -33,6 +38,8 @@ export interface ContentItem {
   prompt: string
   answer: string
   sum?: { a: number; op: '+' | '-'; b: number; result: number }
+  /** Optional illustration of the word's meaning (mainly for `word` items). */
+  image?: WordImage
   tags?: string[]
   source: 'base' | 'user'
 }

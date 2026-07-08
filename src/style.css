@@ -140,6 +140,7 @@ button {
 }
 
 .tile {
+  position: relative;
   aspect-ratio: 1;
   border: none;
   border-radius: 18px;
@@ -148,6 +149,14 @@ button {
   display: grid;
   place-items: center;
   padding: 6px;
+}
+
+.tile-emoji {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  font-size: 1.15rem;
+  line-height: 1;
 }
 
 .tile:active {
@@ -433,6 +442,30 @@ button {
   background: var(--accent);
   color: #fff;
   box-shadow: none;
+}
+
+.emoji-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.emoji-picker button {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: var(--field-bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.emoji-picker button.active {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  background: var(--panel);
 }
 
 /* ---- Modal (parent gate + settings) -------------------------------------- */

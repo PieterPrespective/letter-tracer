@@ -64,8 +64,12 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
   let devTotal = 0
   let devCount = 0
   let celebrated = false
+  let revealStart = 0
   let dirty = true
   let raf = 0
+
+  const TRACE_OPACITY = 0.14
+  const REVEAL_OPACITY = 0.55
 
   surface.transform = layout[current]
 
@@ -76,6 +80,7 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
 
   function finishWord() {
     celebrated = true
+    revealStart = performance.now()
     const { stars } = scoreGlyph(devCount > 0 ? devTotal / devCount : 0, engine.tolerance)
     message.innerHTML = `Goed zo! <span class="stars">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</span>`
     message.classList.add('done')
@@ -120,10 +125,21 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
     }
   }
 
+  function imageOpacity(now: number): number {
+    if (!celebrated) return TRACE_OPACITY
+    const t = Math.min((now - revealStart) / 600, 1)
+    return TRACE_OPACITY + (REVEAL_OPACITY - TRACE_OPACITY) * t
+  }
+
   function frame() {
     const now = performance.now()
-    if (dirty || feedback.active) {
-      drawWordScene(surface, layout, glyphs, current, engine, { debug: opts.debug })
+    const revealing = celebrated && now - revealStart < 600
+    if (dirty || feedback.active || revealing) {
+      drawWordScene(surface, layout, glyphs, current, engine, {
+        debug: opts.debug,
+        image: item.image,
+        imageOpacity: imageOpacity(now),
+      })
       feedback.draw(surface.ctx, now)
       updateHud()
       dirty = false

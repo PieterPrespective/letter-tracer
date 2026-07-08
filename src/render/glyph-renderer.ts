@@ -7,7 +7,7 @@ import { type Transform, glyphToCanvas } from '../geometry/box'
 import { layoutGlyphs } from '../geometry/layout'
 import { canvasColors } from '../theme'
 import type { Point } from '../geometry/point'
-import type { Glyph } from '../model/types'
+import type { Glyph, WordImage } from '../model/types'
 import type { CanvasSurface } from './canvas'
 import type { TraceEngine } from '../tracing/engine'
 
@@ -50,6 +50,10 @@ export function drawGlyphsPreview(
 export interface DrawOptions {
   /** Draw the authoring overlay: stroke numbers, start dots, direction arrows. */
   debug?: boolean
+  /** Word illustration to show behind the letters (words). */
+  image?: WordImage
+  /** Opacity 0..1 for the background image (faint while tracing, brighter on done). */
+  imageOpacity?: number
 }
 
 type GlyphMode = 'done' | 'active' | 'upcoming'
@@ -141,6 +145,20 @@ export function drawWordScene(
   ctx.fillRect(0, 0, surface.cssWidth, surface.cssHeight)
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
+
+  // Word illustration behind the letters (emoji), faint while tracing.
+  const opacity = opts.imageOpacity ?? 0
+  if (opts.image?.kind === 'emoji' && opacity > 0) {
+    const t0 = layout[0]
+    const size = GLYPH_SIZE * t0.scale * 0.72
+    ctx.save()
+    ctx.globalAlpha = opacity
+    ctx.font = `${size}px "Segoe UI Emoji", "Noto Color Emoji", sans-serif`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(opts.image.value, surface.cssWidth / 2, t0.offsetY + (GLYPH_SIZE * t0.scale) / 2)
+    ctx.restore()
+  }
 
   glyphs.forEach((glyph, i) => {
     const mode: GlyphMode = i < currentIndex ? 'done' : i === currentIndex ? 'active' : 'upcoming'

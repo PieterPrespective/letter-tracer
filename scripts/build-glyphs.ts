@@ -180,6 +180,7 @@ type ContentItem = {
   tags: string[]
   source: 'base'
   sum?: { a: number; op: '+' | '-'; b: number; result: number }
+  image?: { kind: 'emoji' | 'dataurl'; value: string }
 }
 
 const OP_NAMES: Record<string, string> = { '+': 'plus', '-': 'minus', '=': 'equals' }
@@ -219,8 +220,17 @@ function glyphFor(ch: string): Glyph {
   return { char: g.char, strokes: g.strokes, metrics: METRICS }
 }
 
+const WORD_EMOJI: Record<string, string> = {
+  aap: '🐵',
+  boom: '🌳',
+  kat: '🐱',
+  maan: '🌙',
+  roos: '🌹',
+  vis: '🐟',
+}
+
 function wordItem(word: string): ContentItem {
-  return {
+  const item: ContentItem = {
     id: `word-${word}`,
     type: 'word',
     glyphs: [...word].map(glyphFor),
@@ -229,6 +239,8 @@ function wordItem(word: string): ContentItem {
     tags: ['woord'],
     source: 'base',
   }
+  if (WORD_EMOJI[word]) item.image = { kind: 'emoji', value: WORD_EMOJI[word] }
+  return item
 }
 
 function sumItem(a: number, op: '+' | '-', b: number): ContentItem {

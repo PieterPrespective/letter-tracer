@@ -26,6 +26,7 @@ describe('base content pack', () => {
   it('includes traceable words and sums composed of base glyphs', () => {
     const kat = baseContent.items.find((i) => i.id === 'word-kat')
     expect(kat?.glyphs.map((g) => g.char).join('')).toBe('kat')
+    expect(kat?.image).toEqual({ kind: 'emoji', value: '🐱' })
     const sum = baseContent.items.find((i) => i.id === 'sum-2p3')
     expect(sum?.glyphs.map((g) => g.char).join('')).toBe('2+3=5')
     expect(sum?.sum).toEqual({ a: 2, op: '+', b: 3, result: 5 })

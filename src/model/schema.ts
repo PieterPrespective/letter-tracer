@@ -88,6 +88,12 @@ function normalizeItem(raw: unknown): ContentItem | string {
   }
   if (Array.isArray(raw.tags)) item.tags = raw.tags.filter((t): t is string => typeof t === 'string')
 
+  if (isRecord(raw.image) && typeof raw.image.value === 'string' && raw.image.value) {
+    if (raw.image.kind === 'emoji' || raw.image.kind === 'dataurl') {
+      item.image = { kind: raw.image.kind, value: raw.image.value }
+    }
+  }
+
   if (type === 'sum') {
     const s = raw.sum
     if (!isRecord(s) || !isNumber(s.a) || !isNumber(s.b) || !isNumber(s.result) || (s.op !== '+' && s.op !== '-'))

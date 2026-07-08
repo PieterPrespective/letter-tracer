@@ -18,6 +18,13 @@ describe('composeWord', () => {
     expect(composeWord('ka9').ok).toBe(false)
     expect(composeWord('hé!').ok).toBe(false)
   })
+
+  it('attaches an emoji image when given, and none when blank', () => {
+    const withEmoji = composeWord('kat', '🐱')
+    expect(withEmoji.ok && withEmoji.item.image).toEqual({ kind: 'emoji', value: '🐱' })
+    const without = composeWord('kat', '  ')
+    expect(without.ok && without.item.image).toBeUndefined()
+  })
 })
 
 describe('composeSum', () => {

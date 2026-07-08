@@ -7144,7 +7144,11 @@
    "tags": [
     "woord"
    ],
-   "source": "base"
+   "source": "base",
+   "image": {
+    "kind": "emoji",
+    "value": "🐵"
+   }
   },
   {
    "id": "word-boom",
@@ -7744,7 +7748,11 @@
    "tags": [
     "woord"
    ],
-   "source": "base"
+   "source": "base",
+   "image": {
+    "kind": "emoji",
+    "value": "🌳"
+   }
   },
   {
    "id": "word-kat",
@@ -8016,7 +8024,11 @@
    "tags": [
     "woord"
    ],
-   "source": "base"
+   "source": "base",
+   "image": {
+    "kind": "emoji",
+    "value": "🐱"
+   }
   },
   {
    "id": "word-maan",
@@ -8560,7 +8572,11 @@
    "tags": [
     "woord"
    ],
-   "source": "base"
+   "source": "base",
+   "image": {
+    "kind": "emoji",
+    "value": "🌙"
+   }
   },
   {
    "id": "word-roos",
@@ -9015,7 +9031,11 @@
    "tags": [
     "woord"
    ],
-   "source": "base"
+   "source": "base",
+   "image": {
+    "kind": "emoji",
+    "value": "🌹"
+   }
   },
   {
    "id": "word-vis",
@@ -9163,7 +9183,11 @@
    "tags": [
     "woord"
    ],
-   "source": "base"
+   "source": "base",
+   "image": {
+    "kind": "emoji",
+    "value": "🐟"
+   }
   },
   {
    "id": "sum-1p2",
