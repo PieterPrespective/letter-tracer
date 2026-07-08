@@ -3,7 +3,8 @@
 // accepted ink. Kept simple for M0; celebration/particles come in M2.
 
 import { GLYPH_SIZE, config } from '../config'
-import { type Transform, fitGlyphBox, glyphToCanvas } from '../geometry/box'
+import { type Transform, glyphToCanvas } from '../geometry/box'
+import { layoutGlyphs } from '../geometry/layout'
 import type { Point } from '../geometry/point'
 import type { Glyph } from '../model/types'
 import type { CanvasSurface } from './canvas'
@@ -33,24 +34,26 @@ function pathTo(ctx: CanvasRenderingContext2D, pts: Point[], t: Transform): void
   }
 }
 
-/** Draw a glyph's centre-lines into a (w×h CSS-px) context — for picker tiles. */
-export function drawGlyphPreview(
+/** Draw one or more glyphs' centre-lines into a (w×h CSS-px) context — for tiles. */
+export function drawGlyphsPreview(
   ctx: CanvasRenderingContext2D,
-  glyph: Glyph,
+  glyphs: Glyph[],
   w: number,
   h: number,
   color = COLORS.ink,
 ): void {
-  const t = fitGlyphBox(w, h, { padding: 0.14 })
+  const layout = layoutGlyphs(glyphs.length, w, h, 0.14)
   ctx.clearRect(0, 0, w, h)
   ctx.strokeStyle = color
-  ctx.lineWidth = Math.max(3, 46 * t.scale)
+  ctx.lineWidth = Math.max(2, 44 * layout[0].scale)
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
-  for (const s of glyph.strokes) {
-    pathTo(ctx, s.points, t)
-    ctx.stroke()
-  }
+  glyphs.forEach((g, i) => {
+    for (const s of g.strokes) {
+      pathTo(ctx, s.points, layout[i])
+      ctx.stroke()
+    }
+  })
 }
 
 export interface DrawOptions {
@@ -58,58 +61,99 @@ export interface DrawOptions {
   debug?: boolean
 }
 
-export function drawScene(surface: CanvasSurface, engine: TraceEngine, opts: DrawOptions = {}): void {
-  const { ctx, transform: t } = surface
-  ctx.clearRect(0, 0, surface.cssWidth, surface.cssHeight)
-  ctx.fillStyle = COLORS.bg
-  ctx.fillRect(0, 0, surface.cssWidth, surface.cssHeight)
+type GlyphMode = 'done' | 'active' | 'upcoming'
 
-  const strokes = engine.glyph.strokes
+function drawGlyph(
+  ctx: CanvasRenderingContext2D,
+  glyph: Glyph,
+  t: Transform,
+  mode: GlyphMode,
+  engine: TraceEngine | null,
+  debug: boolean,
+): void {
+  const strokes = glyph.strokes
 
-  // 1. The road: every stroke as a wide, soft band.
-  ctx.lineCap = 'round'
-  ctx.lineJoin = 'round'
-  for (const s of strokes) {
-    ctx.strokeStyle = COLORS.road
-    ctx.lineWidth = 2 * strokeTolerancePx(s.tolerance, t)
-    pathTo(ctx, s.points, t)
-    ctx.stroke()
+  // Road band under the letter (not for already-completed glyphs).
+  if (mode !== 'done') {
+    for (const s of strokes) {
+      ctx.strokeStyle = COLORS.road
+      ctx.lineWidth = 2 * strokeTolerancePx(s.tolerance, t)
+      pathTo(ctx, s.points, t)
+      ctx.stroke()
+    }
   }
 
-  // 2. Centre-line guide; the current stroke stands out.
+  // Centre-line: solid ink for done glyphs, current stroke highlighted for the
+  // active glyph, faint dashed guide for everything else.
   for (let i = 0; i < strokes.length; i++) {
-    ctx.strokeStyle = i === engine.currentStroke ? COLORS.current : COLORS.guide
-    ctx.lineWidth = i === engine.currentStroke ? 4 : 2
-    ctx.setLineDash(i === engine.currentStroke ? [] : [8, 10])
+    if (mode === 'done') {
+      ctx.strokeStyle = COLORS.ink
+      ctx.lineWidth = 10
+      ctx.setLineDash([])
+    } else if (mode === 'active' && engine && i === engine.currentStroke) {
+      ctx.strokeStyle = COLORS.current
+      ctx.lineWidth = 4
+      ctx.setLineDash([])
+    } else {
+      ctx.strokeStyle = COLORS.guide
+      ctx.lineWidth = 2
+      ctx.setLineDash([8, 10])
+    }
     pathTo(ctx, strokes[i].points, t)
     ctx.stroke()
   }
   ctx.setLineDash([])
 
-  // 3. The child's accepted ink (completed strokes + current trail).
-  ctx.strokeStyle = COLORS.ink
-  ctx.lineWidth = 10
-  for (const trail of engine.completedTrails) {
-    if (trail.length < 2) continue
-    pathTo(ctx, trail, t)
-    ctx.stroke()
-  }
-  if (engine.acceptedTrail.length >= 2) {
-    ctx.strokeStyle = COLORS.inkCurrent
-    pathTo(ctx, engine.acceptedTrail, t)
-    ctx.stroke()
+  // The child's ink on the active glyph + the start dot for the current stroke.
+  if (mode === 'active' && engine) {
+    ctx.strokeStyle = COLORS.ink
+    ctx.lineWidth = 10
+    for (const trail of engine.completedTrails) {
+      if (trail.length < 2) continue
+      pathTo(ctx, trail, t)
+      ctx.stroke()
+    }
+    if (engine.acceptedTrail.length >= 2) {
+      ctx.strokeStyle = COLORS.inkCurrent
+      pathTo(ctx, engine.acceptedTrail, t)
+      ctx.stroke()
+    }
+    if (!engine.isComplete) {
+      const start = glyphToCanvas(engine.startPoint(), t)
+      ctx.fillStyle = COLORS.start
+      ctx.beginPath()
+      ctx.arc(start.x, start.y, 14, 0, 2 * Math.PI)
+      ctx.fill()
+    }
   }
 
-  // 4. Start dot for the current stroke (guidance).
-  if (!engine.isComplete) {
-    const start = glyphToCanvas(engine.startPoint(), t)
-    ctx.fillStyle = COLORS.start
-    ctx.beginPath()
-    ctx.arc(start.x, start.y, 14, 0, 2 * Math.PI)
-    ctx.fill()
-  }
+  if (debug) drawAuthoringOverlay(ctx, strokes, t)
+}
 
-  if (opts.debug) drawAuthoringOverlay(ctx, strokes, t)
+/**
+ * Render a whole exercise (one glyph, or a word/sum) with the active glyph
+ * traced by `engine`, earlier glyphs shown as completed ink, and later glyphs
+ * faint. `layout[i]` is the glyph→canvas transform for glyph i.
+ */
+export function drawWordScene(
+  surface: CanvasSurface,
+  layout: Transform[],
+  glyphs: Glyph[],
+  currentIndex: number,
+  engine: TraceEngine,
+  opts: DrawOptions = {},
+): void {
+  const { ctx } = surface
+  ctx.clearRect(0, 0, surface.cssWidth, surface.cssHeight)
+  ctx.fillStyle = COLORS.bg
+  ctx.fillRect(0, 0, surface.cssWidth, surface.cssHeight)
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+
+  glyphs.forEach((glyph, i) => {
+    const mode: GlyphMode = i < currentIndex ? 'done' : i === currentIndex ? 'active' : 'upcoming'
+    drawGlyph(ctx, glyph, layout[i], mode, mode === 'active' ? engine : null, opts.debug ?? false)
+  })
 }
 
 /** Reviewer overlay: per-stroke start dot, order number, and a direction arrow. */

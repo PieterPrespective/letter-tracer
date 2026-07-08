@@ -3,7 +3,7 @@
 // See Prompts/lt-01/07-ui-ux-and-feedback.md.
 
 import { listItems } from '../../model/glyph-library'
-import { drawGlyphPreview } from '../../render/glyph-renderer'
+import { drawGlyphsPreview } from '../../render/glyph-renderer'
 import { getSettings, updateSettings } from '../../state/settings'
 import type { ContentItem } from '../../model/types'
 
@@ -29,20 +29,23 @@ function categories(): Category[] {
 }
 
 function tile(item: ContentItem): HTMLButtonElement {
+  const multi = item.glyphs.length > 1
   const btn = document.createElement('button')
-  btn.className = 'tile'
+  btn.className = multi ? 'tile wide' : 'tile'
   btn.type = 'button'
   btn.setAttribute('aria-label', item.prompt)
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
   const canvas = document.createElement('canvas')
-  const size = 96
-  canvas.width = size * dpr
-  canvas.height = size * dpr
-  canvas.style.width = canvas.style.height = `${size}px`
+  const h = 96
+  const w = multi ? Math.min(96 + item.glyphs.length * 46, 280) : 96
+  canvas.width = w * dpr
+  canvas.height = h * dpr
+  canvas.style.width = `${w}px`
+  canvas.style.height = `${h}px`
   const ctx = canvas.getContext('2d')
   if (ctx) {
     ctx.scale(dpr, dpr)
-    drawGlyphPreview(ctx, item.glyphs[0], size, size)
+    drawGlyphsPreview(ctx, item.glyphs, w, h)
   }
   btn.appendChild(canvas)
   return btn

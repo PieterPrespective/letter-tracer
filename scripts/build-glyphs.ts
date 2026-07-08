@@ -167,12 +167,13 @@ const lower: Glyph[] = [
 // ---------------------------------------------------------------------------
 type ContentItem = {
   id: string
-  type: 'letter' | 'number'
+  type: 'letter' | 'number' | 'word' | 'sum'
   glyphs: Glyph[]
   prompt: string
   answer: string
   tags: string[]
   source: 'base'
+  sum?: { a: number; op: '+' | '-'; b: number; result: number }
 }
 
 const OP_NAMES: Record<string, string> = { '+': 'plus', '-': 'minus', '=': 'equals' }
@@ -200,11 +201,61 @@ function itemFor(g: Glyph): ContentItem {
 }
 
 const all = [...lower, ...upper, ...digits, ...operators]
+
+// --- Words & sums, composed from the single-glyph library --------------------
+const glyphByChar = new Map<string, Glyph>()
+for (const g of all) glyphByChar.set(g.char, g)
+const METRICS: Metrics = { baseline: BASE, xHeight: XT, capHeight: CAP }
+
+function glyphFor(ch: string): Glyph {
+  const g = glyphByChar.get(ch)
+  if (!g) throw new Error(`no base glyph for '${ch}'`)
+  return { char: g.char, strokes: g.strokes, metrics: METRICS }
+}
+
+function wordItem(word: string): ContentItem {
+  return {
+    id: `word-${word}`,
+    type: 'word',
+    glyphs: [...word].map(glyphFor),
+    prompt: word,
+    answer: word,
+    tags: ['woord'],
+    source: 'base',
+  }
+}
+
+function sumItem(a: number, op: '+' | '-', b: number): ContentItem {
+  const result = op === '+' ? a + b : a - b
+  const chars = [...String(a), op, ...String(b), '=', ...String(result)]
+  return {
+    id: `sum-${a}${op === '+' ? 'p' : 'm'}${b}`,
+    type: 'sum',
+    glyphs: chars.map(glyphFor),
+    prompt: `${a} ${op} ${b} =`,
+    answer: String(result),
+    sum: { a, op, b, result },
+    tags: ['som'],
+    source: 'base',
+  }
+}
+
+const words = ['aap', 'boom', 'kat', 'maan', 'roos', 'vis'].map(wordItem)
+const sums: ContentItem[] = [
+  sumItem(1, '+', 2),
+  sumItem(2, '+', 3),
+  sumItem(3, '+', 1),
+  sumItem(4, '+', 1),
+  sumItem(2, '+', 2),
+  sumItem(5, '-', 2),
+  sumItem(4, '-', 1),
+]
+
 const pack = {
   schemaVersion: 1,
   name: 'Basis Nederlands',
   locale: 'nl-NL',
-  items: all.map(itemFor),
+  items: [...all.map(itemFor), ...words, ...sums],
 }
 
 // Round coordinates to keep the JSON small and readable.

@@ -1,12 +1,14 @@
-// The tracing screen: canvas + HUD + feedback, driven by a TraceEngine. Detects
-// stroke- and glyph-completion to fire pops, celebration, sound, and scoring.
-// Returns a handle with destroy() so the app shell can tear it down cleanly.
+// The tracing screen. Handles a single glyph or a multi-glyph word/sum: glyphs
+// are laid out in a row and traced left-to-right, auto-advancing as each one is
+// completed. Fires pops, celebration, sound, and scoring. Returns a handle with
+// destroy() so the app shell can tear it down cleanly.
 
 import { CanvasSurface } from '../../render/canvas'
-import { drawScene } from '../../render/glyph-renderer'
+import { drawWordScene } from '../../render/glyph-renderer'
 import { FeedbackLayer } from '../../render/feedback'
 import { attachPointerInput } from '../../input/pointer'
 import { glyphToCanvas } from '../../geometry/box'
+import { layoutGlyphs } from '../../geometry/layout'
 import { TraceEngine } from '../../tracing/engine'
 import { scoreGlyph } from '../../tracing/scoring'
 import { playCelebrate, playStrokeDone, unlockAudio } from '../../util/audio'
@@ -24,7 +26,7 @@ const TYPE_LABEL: Record<string, string> = { letter: 'Letter', number: 'Cijfer',
 
 export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): { destroy: () => void } {
   const item = opts.items[opts.index]
-  const glyph = item.glyphs[0]
+  const glyphs = item.glyphs
   const label = TYPE_LABEL[item.type] ?? 'Letter'
 
   root.innerHTML = `
@@ -51,17 +53,34 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
   const nextBtn = $<HTMLButtonElement>('#next')
 
   const surface = new CanvasSurface(canvas)
-  const engine = new TraceEngine(glyph)
+  let layout = layoutGlyphs(glyphs.length, surface.cssWidth, surface.cssHeight)
+
+  let current = 0
+  let engine = new TraceEngine(glyphs[current])
   const feedback = new FeedbackLayer()
 
-  let committed = 0
+  let committed = 0 // strokes committed in the current glyph
+  let devTotal = 0
+  let devCount = 0
   let celebrated = false
   let dirty = true
   let raf = 0
 
+  surface.transform = layout[current]
+
   function strokeEndCanvas(strokeIndex: number) {
-    const pts = glyph.strokes[strokeIndex].points
+    const pts = glyphs[current].strokes[strokeIndex].points
     return glyphToCanvas(pts[pts.length - 1], surface.transform)
+  }
+
+  function finishWord() {
+    celebrated = true
+    const { stars } = scoreGlyph(devCount > 0 ? devTotal / devCount : 0, engine.tolerance)
+    message.innerHTML = `Goed zo! <span class="stars">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</span>`
+    message.classList.add('done')
+    nextBtn.hidden = false
+    feedback.celebrate({ x: surface.cssWidth / 2, y: surface.cssHeight * 0.45 }, performance.now())
+    playCelebrate()
   }
 
   function onChange() {
@@ -72,21 +91,29 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
       playStrokeDone()
     }
     if (engine.isComplete && !celebrated) {
-      celebrated = true
-      const { stars } = scoreGlyph(engine.meanDeviation, engine.tolerance)
-      message.innerHTML = `Goed zo! <span class="stars">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</span>`
-      message.classList.add('done')
-      nextBtn.hidden = false
-      feedback.celebrate({ x: surface.cssWidth / 2, y: surface.cssHeight * 0.45 }, performance.now())
-      playCelebrate()
+      devTotal += engine.meanDeviation
+      devCount++
+      if (current < glyphs.length - 1) {
+        // Advance to the next glyph of the word/sum.
+        current++
+        engine = new TraceEngine(glyphs[current])
+        surface.transform = layout[current]
+        committed = 0
+        playStrokeDone()
+      } else {
+        finishWord()
+      }
     }
   }
 
   function updateHud() {
-    const n = engine.strokeCount
-    const done = Math.min(engine.currentStroke, n)
-    progress.textContent = n > 1 ? `${engine.isComplete ? n : done + 1}/${n}` : ''
-    if (!engine.isComplete) {
+    if (glyphs.length > 1) {
+      progress.textContent = `${current + 1}/${glyphs.length}`
+    } else {
+      const n = engine.strokeCount
+      progress.textContent = n > 1 ? `${engine.isComplete ? n : Math.min(engine.currentStroke + 1, n)}/${n}` : ''
+    }
+    if (!celebrated) {
       message.classList.remove('done')
       message.textContent = engine.status === 'off-path' ? 'Begin bij de stip' : ''
     }
@@ -95,7 +122,7 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
   function frame() {
     const now = performance.now()
     if (dirty || feedback.active) {
-      drawScene(surface, engine, { debug: opts.debug })
+      drawWordScene(surface, layout, glyphs, current, engine, { debug: opts.debug })
       feedback.draw(surface.ctx, now)
       updateHud()
       dirty = false
@@ -103,14 +130,18 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
     raf = requestAnimationFrame(frame)
   }
 
-  const detachPointer = attachPointerInput(surface, engine, onChange)
+  const detachPointer = attachPointerInput(surface, () => engine, onChange)
   const onFirstDown = () => unlockAudio()
   canvas.addEventListener('pointerdown', onFirstDown, { once: true })
 
   $('#back').addEventListener('click', opts.onBack)
   $('#clear').addEventListener('click', () => {
-    engine.reset()
+    current = 0
+    engine = new TraceEngine(glyphs[current])
+    surface.transform = layout[current]
     committed = 0
+    devTotal = 0
+    devCount = 0
     celebrated = false
     nextBtn.hidden = true
     message.textContent = ''
@@ -121,6 +152,8 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
 
   const ro = new ResizeObserver(() => {
     surface.resize()
+    layout = layoutGlyphs(glyphs.length, surface.cssWidth, surface.cssHeight)
+    surface.transform = layout[current]
     dirty = true
   })
   ro.observe(canvas)

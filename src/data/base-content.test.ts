@@ -19,8 +19,16 @@ function traceIdeal(glyph: Glyph): TraceEngine {
 describe('base content pack', () => {
   it('parses with no warnings and has the full base set', () => {
     expect(baseWarnings).toEqual([])
-    // a–z, A–Z, 0–9, + - =  = 26 + 26 + 10 + 3
-    expect(baseContent.items).toHaveLength(65)
+    // 26 + 26 letters + 10 digits + 3 operators + 6 words + 7 sums
+    expect(baseContent.items).toHaveLength(78)
+  })
+
+  it('includes traceable words and sums composed of base glyphs', () => {
+    const kat = baseContent.items.find((i) => i.id === 'word-kat')
+    expect(kat?.glyphs.map((g) => g.char).join('')).toBe('kat')
+    const sum = baseContent.items.find((i) => i.id === 'sum-2p3')
+    expect(sum?.glyphs.map((g) => g.char).join('')).toBe('2+3=5')
+    expect(sum?.sum).toEqual({ a: 2, op: '+', b: 3, result: 5 })
   })
 
   it('every base glyph is traceable to completion along its ideal path', () => {

@@ -6,10 +6,14 @@
 import type { CanvasSurface } from '../render/canvas'
 import type { TraceEngine } from '../tracing/engine'
 
-/** Attach handlers; returns a disposer that removes them. */
+/**
+ * Attach handlers; returns a disposer that removes them. `getEngine` is called
+ * per event so the active engine can be swapped (e.g. advancing to the next
+ * glyph of a word) without re-attaching listeners.
+ */
 export function attachPointerInput(
   surface: CanvasSurface,
-  engine: TraceEngine,
+  getEngine: () => TraceEngine,
   onChange: () => void,
 ): () => void {
   const canvas = surface.canvas
@@ -28,7 +32,7 @@ export function attachPointerInput(
       /* capture is best-effort */
     }
     e.preventDefault()
-    engine.beginStroke(surface.clientToGlyph(e.clientX, e.clientY))
+    getEngine().beginStroke(surface.clientToGlyph(e.clientX, e.clientY))
     onChange()
   }
 
@@ -40,13 +44,13 @@ export function attachPointerInput(
     // event itself when the list is unavailable or empty.
     const coalesced = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : []
     const events = coalesced.length > 0 ? coalesced : [e]
-    for (const ev of events) engine.addPoint(surface.clientToGlyph(ev.clientX, ev.clientY))
+    for (const ev of events) getEngine().addPoint(surface.clientToGlyph(ev.clientX, ev.clientY))
     onChange()
   }
 
   const up = (e: PointerEvent) => {
     if (e.pointerId !== activeId) return
-    engine.endStroke()
+    getEngine().endStroke()
     activeId = null
     activeType = null
     onChange()
