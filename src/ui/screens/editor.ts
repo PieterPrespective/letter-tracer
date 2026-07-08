@@ -6,6 +6,7 @@ import { content } from '../../model/content'
 import { composeSum, composeWord } from '../../model/compose'
 import { getSettings, updateSettings, type ThemeSetting } from '../../state/settings'
 import { applyTheme } from '../../theme'
+import { dutchVoices, onVoicesChanged } from '../../util/speech'
 import type { ContentItem } from '../../model/types'
 
 export interface EditorScreenOptions {
@@ -23,6 +24,8 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
         <section class="card">
           <label class="row"><span>Geluid aan</span><input id="sound" type="checkbox" /></label>
           <label class="row"><span>Uitspraak aan</span><input id="speech" type="checkbox" /></label>
+          <div class="row"><span>Stem</span><select id="voice" aria-label="Nederlandse stem"></select></div>
+          <p id="voiceNote" class="form-msg"></p>
         </section>
 
         <section class="card">
@@ -77,6 +80,35 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
   const speech = $<HTMLInputElement>('#speech')
   speech.checked = getSettings().speech
   speech.addEventListener('change', () => updateSettings({ speech: speech.checked }))
+
+  const voiceSel = $<HTMLSelectElement>('#voice')
+  const voiceNote = $('#voiceNote')
+  function paintVoices() {
+    const vs = dutchVoices()
+    if (vs.length === 0) {
+      voiceSel.hidden = true
+      voiceNote.textContent =
+        'Geen Nederlandse stem gevonden. Installeer er een in de tekst-naar-spraak-instellingen van het apparaat.'
+      return
+    }
+    voiceSel.hidden = false
+    voiceNote.textContent = ''
+    voiceSel.innerHTML = ''
+    const auto = document.createElement('option')
+    auto.value = ''
+    auto.textContent = 'Automatisch'
+    voiceSel.appendChild(auto)
+    for (const v of vs) {
+      const o = document.createElement('option')
+      o.value = v.voiceURI
+      o.textContent = v.name
+      voiceSel.appendChild(o)
+    }
+    voiceSel.value = getSettings().voiceURI
+  }
+  voiceSel.addEventListener('change', () => updateSettings({ voiceURI: voiceSel.value }))
+  const unsubVoices = onVoicesChanged(paintVoices)
+  paintVoices()
 
   const themeGroup = $<HTMLDivElement>('#theme')
   const paintTheme = () => {
@@ -245,6 +277,7 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
   return {
     destroy() {
       unsub()
+      unsubVoices()
       root.innerHTML = ''
     },
   }

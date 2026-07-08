@@ -8,10 +8,12 @@ export interface Settings {
   muted: boolean
   speech: boolean
   theme: ThemeSetting
+  /** Preferred Dutch TTS voice (voiceURI); empty = auto-select. */
+  voiceURI: string
 }
 
 const KEY = 'lt-settings'
-const DEFAULTS: Settings = { muted: false, speech: true, theme: 'system' }
+const DEFAULTS: Settings = { muted: false, speech: true, theme: 'system', voiceURI: '' }
 
 let cache: Settings | null = null
 

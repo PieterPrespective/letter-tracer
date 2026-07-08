@@ -424,6 +424,16 @@ button {
   margin-top: 12px;
 }
 
+.editor .row select {
+  font-size: 1rem;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--field-bg);
+  color: var(--ink);
+  max-width: 60%;
+}
+
 .segmented {
   display: flex;
   gap: 8px;

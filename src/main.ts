@@ -5,10 +5,13 @@ import './style.css'
 import { App } from './app'
 import { setupPWA } from './pwa/register'
 import { initTheme } from './theme'
+import { initSpeech } from './util/speech'
 import { getSettings } from './state/settings'
 
 // Apply the theme before mounting so there is no light→dark flash.
 initTheme(() => getSettings().theme)
+// Start caching TTS voices (they load asynchronously).
+initSpeech()
 
 const root = document.querySelector<HTMLDivElement>('#app')!
 void new App(root).start()
