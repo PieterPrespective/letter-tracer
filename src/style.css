@@ -16,6 +16,7 @@
   --trace-ink: #2f6b3f;
   --trace-ink-active: #3f8f52;
   --start: #e2683c;
+  --hand: #d99a5b;
 }
 
 /* Dark palette. Applied when the system is dark (and no manual override) or
@@ -39,6 +40,7 @@
     --trace-ink: #7fd39a;
     --trace-ink-active: #a6e6ba;
     --start: #f0895f;
+    --hand: #caa06a;
   }
 }
 :root[data-theme='dark'] {
@@ -58,6 +60,7 @@
   --trace-ink: #7fd39a;
   --trace-ink-active: #a6e6ba;
   --start: #f0895f;
+  --hand: #caa06a;
 }
 
 * {
@@ -240,6 +243,36 @@ button {
   background: var(--bg);
   box-shadow: inset 0 0 0 2px var(--line);
   touch-action: none;
+}
+
+.fingers {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  color: var(--hand);
+}
+
+.fingers[hidden] {
+  display: none;
+}
+
+.hand-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.hand {
+  height: clamp(52px, 11vh, 92px);
+  width: auto;
+}
+
+.fingers .op {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .tray {

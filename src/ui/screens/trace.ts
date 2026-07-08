@@ -10,6 +10,8 @@ import { attachPointerInput } from '../../input/pointer'
 import { glyphToCanvas } from '../../geometry/box'
 import { layoutGlyphs } from '../../geometry/layout'
 import { TraceEngine } from '../../tracing/engine'
+import { handsForCount } from '../../model/fingers'
+import { handSVG } from '../../render/hand'
 import { scoreGlyph } from '../../tracing/scoring'
 import { playCelebrate, playStrokeDone, unlockAudio } from '../../util/audio'
 import { cancelSpeech, pronounceItem } from '../../util/speech'
@@ -41,6 +43,7 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
         <button id="clear" class="round" type="button" aria-label="Opnieuw">↺</button>
       </header>
       <canvas id="trace"></canvas>
+      <div id="fingers" class="fingers" hidden></div>
       <div class="tray">
         <p id="message" class="message" role="status" aria-live="polite"></p>
         <button id="next" class="next-btn" type="button" hidden>Volgende →</button>
@@ -54,6 +57,30 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
   const message = $('#message')
   const progress = $('#progress')
   const nextBtn = $<HTMLButtonElement>('#next')
+
+  // Finger-counting aid for sums: hands for each operand.
+  const fingersEl = $<HTMLDivElement>('#fingers')
+  function handGroup(count: number): HTMLElement {
+    const group = document.createElement('div')
+    group.className = 'hand-group'
+    group.setAttribute('role', 'group')
+    group.setAttribute('aria-label', `${count}`)
+    for (const h of handsForCount(count)) {
+      const holder = document.createElement('div')
+      holder.innerHTML = handSVG(h.fingers, h.hand)
+      if (holder.firstElementChild) group.appendChild(holder.firstElementChild)
+    }
+    return group
+  }
+  if (item.type === 'sum' && item.sum) {
+    fingersEl.hidden = false
+    fingersEl.appendChild(handGroup(item.sum.a))
+    const op = document.createElement('span')
+    op.className = 'op'
+    op.textContent = item.sum.op === '+' ? '+' : '−'
+    fingersEl.appendChild(op)
+    fingersEl.appendChild(handGroup(item.sum.b))
+  }
 
   const surface = new CanvasSurface(canvas)
   let layout = layoutGlyphs(glyphs.length, surface.cssWidth, surface.cssHeight)
