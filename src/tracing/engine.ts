@@ -134,8 +134,12 @@ export class TraceEngine {
       this.status = 'off-path'
       return
     }
-    if (newProgress > this.progress + this.cfg.maxForwardJump) {
-      // Jumped too far ahead: likely cutting a corner — ignore this sample.
+    // Anti corner-cut: reject a forward jump that skips a meaningful physical
+    // distance. Measured in absolute arc length (capped below by tolerance) so
+    // that very short strokes — dots on i/j — aren't blocked by a single step.
+    const jumpArc = (newProgress - this.progress) * t.length
+    const maxJumpArc = Math.max(t.tolerance, this.cfg.maxForwardJump * t.length)
+    if (jumpArc > maxJumpArc) {
       this.status = 'off-path'
       return
     }

@@ -32,7 +32,12 @@ function pathTo(ctx: CanvasRenderingContext2D, pts: Point[], t: Transform): void
   }
 }
 
-export function drawScene(surface: CanvasSurface, engine: TraceEngine): void {
+export interface DrawOptions {
+  /** Draw the authoring overlay: stroke numbers, start dots, direction arrows. */
+  debug?: boolean
+}
+
+export function drawScene(surface: CanvasSurface, engine: TraceEngine, opts: DrawOptions = {}): void {
   const { ctx, transform: t } = surface
   ctx.clearRect(0, 0, surface.cssWidth, surface.cssHeight)
   ctx.fillStyle = COLORS.bg
@@ -80,6 +85,44 @@ export function drawScene(surface: CanvasSurface, engine: TraceEngine): void {
     ctx.fillStyle = COLORS.start
     ctx.beginPath()
     ctx.arc(start.x, start.y, 14, 0, 2 * Math.PI)
+    ctx.fill()
+  }
+
+  if (opts.debug) drawAuthoringOverlay(ctx, strokes, t)
+}
+
+/** Reviewer overlay: per-stroke start dot, order number, and a direction arrow. */
+function drawAuthoringOverlay(
+  ctx: CanvasRenderingContext2D,
+  strokes: { points: Point[] }[],
+  t: Transform,
+): void {
+  ctx.font = 'bold 22px system-ui, sans-serif'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  for (let i = 0; i < strokes.length; i++) {
+    const pts = strokes[i].points
+    const start = glyphToCanvas(pts[0], t)
+    const end = glyphToCanvas(pts[pts.length - 1], t)
+    const prev = glyphToCanvas(pts[Math.max(0, pts.length - 2)], t)
+
+    // Start dot + order number.
+    ctx.fillStyle = '#1f8a4c'
+    ctx.beginPath()
+    ctx.arc(start.x, start.y, 13, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.fillStyle = '#fff'
+    ctx.fillText(String(i + 1), start.x, start.y + 1)
+
+    // Direction arrowhead at the stroke end.
+    const ang = Math.atan2(end.y - prev.y, end.x - prev.x)
+    const h = 16
+    ctx.fillStyle = '#d12f5a'
+    ctx.beginPath()
+    ctx.moveTo(end.x, end.y)
+    ctx.lineTo(end.x - h * Math.cos(ang - 0.4), end.y - h * Math.sin(ang - 0.4))
+    ctx.lineTo(end.x - h * Math.cos(ang + 0.4), end.y - h * Math.sin(ang + 0.4))
+    ctx.closePath()
     ctx.fill()
   }
 }
