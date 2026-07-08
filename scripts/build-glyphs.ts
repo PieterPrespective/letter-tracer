@@ -73,8 +73,14 @@ const digits: Glyph[] = [
   ]),
   G('6', [join([arc(560, 300, 170, 150, -30, -180, 14), arc(470, 600, 190, 190, 180, 540, 30)], 'Van boven naar de bocht')]),
   G('7', [seg([[320, 180], [680, 180], [430, BASE]])]),
-  G('8', [join([arc(490, 320, 155, 155, -90, 270, 24), arc(490, 600, 185, 185, 90, 450, 28)], 'In één beweging, als een acht')]),
-  G('9', [join([arc(500, 350, 185, 175, 150, 510, 28), [{ x: 640, y: 400 }, { x: 620, y: BASE }]], 'Rondje boven, staart omlaag')]),
+  G('8', [
+    join([arc(490, 335, 135, 135, -90, 270, 24)], 'Rondje boven'),
+    join([arc(490, 610, 140, 140, -90, 270, 26)], 'Rondje onder'),
+  ]),
+  G('9', [
+    seg([[640, 175], [640, 560], [600, BASE]], 'Staart naar beneden'),
+    join([arc(640, 340, 175, 165, 270, 90, 24)], 'Boog naar links'),
+  ]),
 ]
 
 // ---------------------------------------------------------------------------
@@ -128,8 +134,8 @@ const upper: Glyph[] = [
 const xMid = (XT + BASE) / 2
 const lower: Glyph[] = [
   G('a', [
-    join([arc(480, xMid, 175, (BASE - XT) / 2, -90, -450, 32)], 'Begin bovenaan, ga naar links rond'),
-    seg([[655, XT], [655, BASE]], 'Van boven naar beneden'),
+    seg([[670, XT], [670, BASE]], 'Eerst de stok'),
+    join([arc(670, xMid, 200, (BASE - XT) / 2, 270, 90, 26)], 'Boog naar links'),
   ]),
   G('b', [seg([[330, CAP], [330, BASE]], 'Eerst de stok'), join([arc(330, xMid, 200, (BASE - XT) / 2, -90, 90, 26)], 'Boog naar rechts')]),
   G('c', [join([arc(510, xMid, 190, (BASE - XT) / 2, -55, -305, 26)], 'Open kant naar rechts')]),
