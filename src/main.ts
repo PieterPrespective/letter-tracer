@@ -3,6 +3,8 @@
 
 import './style.css'
 import { App } from './app'
+import { setupPWA } from './pwa/register'
 
 const root = document.querySelector<HTMLDivElement>('#app')!
 void new App(root).start()
+setupPWA()
