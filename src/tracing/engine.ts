@@ -60,6 +60,10 @@ export class TraceEngine {
   completedTrails: Point[][] = []
 
   private active = false
+  private glyphDevSum = 0
+  private glyphDevCount = 0
+  private strokeDevSum = 0
+  private strokeDevCount = 0
 
   constructor(glyph: Glyph, cfg: TraceConfig = defaultConfig) {
     this.glyph = glyph
@@ -73,6 +77,16 @@ export class TraceEngine {
 
   get isComplete(): boolean {
     return this.status === 'glyph-complete'
+  }
+
+  /** Mean distance-from-path of accepted samples across completed strokes. */
+  get meanDeviation(): number {
+    return this.glyphDevCount > 0 ? this.glyphDevSum / this.glyphDevCount : 0
+  }
+
+  /** Base tolerance (glyph units) of the current stroke, for scoring. */
+  get tolerance(): number {
+    return this.strokes[this.currentStroke]?.tolerance ?? this.strokes[0].tolerance
   }
 
   /** Start point the child must begin the current stroke near. */
@@ -104,6 +118,8 @@ export class TraceEngine {
     if (nearStart) {
       this.progress = 0
       this.acceptedTrail = [t.pts[0]]
+      this.strokeDevSum = 0
+      this.strokeDevCount = 0
       this.active = true
       this.status = 'tracing'
       return true
@@ -146,6 +162,8 @@ export class TraceEngine {
 
     this.progress = Math.max(this.progress, newProgress)
     this.acceptedTrail.push(hit.point)
+    this.strokeDevSum += hit.dist
+    this.strokeDevCount++
     this.status = 'tracing'
 
     const atEnd = dist(p, t.pts[t.pts.length - 1]) <= t.endTolerance
@@ -159,6 +177,10 @@ export class TraceEngine {
     this.active = false
     if (this.status === 'stroke-complete') {
       this.completedTrails.push(this.acceptedTrail)
+      this.glyphDevSum += this.strokeDevSum
+      this.glyphDevCount += this.strokeDevCount
+      this.strokeDevSum = 0
+      this.strokeDevCount = 0
       this.acceptedTrail = []
       this.progress = 0
       this.currentStroke++
@@ -176,6 +198,10 @@ export class TraceEngine {
     this.acceptedTrail = []
     this.completedTrails = []
     this.active = false
+    this.glyphDevSum = 0
+    this.glyphDevCount = 0
+    this.strokeDevSum = 0
+    this.strokeDevCount = 0
     this.status = 'awaiting-start'
   }
 }

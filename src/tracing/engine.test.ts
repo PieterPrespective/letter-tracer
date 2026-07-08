@@ -143,6 +143,19 @@ describe('TraceEngine — resume after lift', () => {
   })
 })
 
+describe('TraceEngine — deviation tracking (for scoring)', () => {
+  it('reports ~0 mean deviation for a dead-on trace and more for a noisy one', () => {
+    const clean = new TraceEngine(lineGlyph())
+    runStroke(clean, traceSamples(LINE))
+    expect(clean.meanDeviation).toBeLessThan(1)
+
+    const noisy = new TraceEngine(lineGlyph())
+    runStroke(noisy, traceSamples(LINE, 40))
+    expect(noisy.meanDeviation).toBeGreaterThan(clean.meanDeviation)
+    expect(noisy.isComplete).toBe(true)
+  })
+})
+
 describe('TraceEngine — reset', () => {
   it('returns to the initial state', () => {
     const engine = new TraceEngine(lineGlyph())

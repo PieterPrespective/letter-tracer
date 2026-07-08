@@ -3,8 +3,9 @@
 // accepted ink. Kept simple for M0; celebration/particles come in M2.
 
 import { GLYPH_SIZE, config } from '../config'
-import { type Transform, glyphToCanvas } from '../geometry/box'
+import { type Transform, fitGlyphBox, glyphToCanvas } from '../geometry/box'
 import type { Point } from '../geometry/point'
+import type { Glyph } from '../model/types'
 import type { CanvasSurface } from './canvas'
 import type { TraceEngine } from '../tracing/engine'
 
@@ -29,6 +30,26 @@ function pathTo(ctx: CanvasRenderingContext2D, pts: Point[], t: Transform): void
     const c = glyphToCanvas(pts[i], t)
     if (i === 0) ctx.moveTo(c.x, c.y)
     else ctx.lineTo(c.x, c.y)
+  }
+}
+
+/** Draw a glyph's centre-lines into a (w×h CSS-px) context — for picker tiles. */
+export function drawGlyphPreview(
+  ctx: CanvasRenderingContext2D,
+  glyph: Glyph,
+  w: number,
+  h: number,
+  color = COLORS.ink,
+): void {
+  const t = fitGlyphBox(w, h, { padding: 0.14 })
+  ctx.clearRect(0, 0, w, h)
+  ctx.strokeStyle = color
+  ctx.lineWidth = Math.max(3, 46 * t.scale)
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  for (const s of glyph.strokes) {
+    pathTo(ctx, s.points, t)
+    ctx.stroke()
   }
 }
 
