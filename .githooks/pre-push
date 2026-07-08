@@ -1,0 +1,14 @@
+#!/bin/sh
+# Local-first regression gate.
+#
+# Runs the test suite (and typecheck) before every push, so broken code
+# rarely reaches CI — most regression runs happen here, on your machine,
+# burning zero GitHub Actions minutes.
+#
+# This hook is activated automatically by `npm install` (the "prepare"
+# script points git at .githooks). To bypass in a pinch: git push --no-verify
+#
+# Keep it fast: this is the pure/geometry suite, which runs in seconds.
+
+echo "pre-push: running npm run check (typecheck + tests)…"
+npm run check

@@ -1,0 +1,42 @@
+name: Tests
+
+# Pre-merge regression gate. Runs only on pull requests (and manual dispatch),
+# NOT on every branch push — the local pre-push hook already runs the suite
+# on your machine, so CI here is the backstop, not the primary runner.
+# Post-merge, deploy.yml re-runs the suite before publishing, so main is
+# always guarded without this workflow double-running on the merge commit.
+on:
+  pull_request:
+    # Docs-only changes can't break the suite — skip them to save minutes.
+    # Keep this list in sync with deploy.yml.
+    paths-ignore:
+      - '**.md'
+      - 'Prompts/**'
+      - '.gitignore'
+      - '.githooks/**'
+  workflow_dispatch:
+
+# Newer commits on the same PR cancel in-flight runs instead of queuing.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck and test
+        run: npm run check

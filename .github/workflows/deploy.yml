@@ -4,6 +4,13 @@ on:
   # Build and deploy on every push to main.
   push:
     branches: [main]
+    # Docs-only changes don't affect the built site — skip the run to save
+    # Actions minutes. Keep this list in sync with test.yml.
+    paths-ignore:
+      - '**.md'
+      - 'Prompts/**'
+      - '.gitignore'
+      - '.githooks/**'
   # Allow manual runs from the Actions tab.
   workflow_dispatch:
 
@@ -15,6 +22,7 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       # Needed for peaceiris to push the built site to the gh-pages branch.
       contents: write
@@ -30,6 +38,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # Regression gate on main: never publish a build whose tests fail.
+      # Folded into this job so main costs one runner, not two.
+      - name: Test
+        run: npm test
 
       - name: Build
         run: npm run build
