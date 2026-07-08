@@ -93,6 +93,8 @@ function normalizeItem(raw: unknown): ContentItem | string {
       item.image = { kind: raw.image.kind, value: raw.image.value }
     }
   }
+  if (typeof raw.say === 'string' && raw.say) item.say = raw.say
+  if (typeof raw.audioSrc === 'string' && raw.audioSrc) item.audioSrc = raw.audioSrc
 
   if (type === 'sum') {
     const s = raw.sum

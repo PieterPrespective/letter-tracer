@@ -420,6 +420,10 @@ button {
   height: 28px;
 }
 
+.editor .card .row + .row {
+  margin-top: 12px;
+}
+
 .segmented {
   display: flex;
   gap: 8px;

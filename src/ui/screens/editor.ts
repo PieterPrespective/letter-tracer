@@ -22,6 +22,7 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
       <div class="editor-body">
         <section class="card">
           <label class="row"><span>Geluid aan</span><input id="sound" type="checkbox" /></label>
+          <label class="row"><span>Uitspraak aan</span><input id="speech" type="checkbox" /></label>
         </section>
 
         <section class="card">
@@ -72,6 +73,10 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
   const sound = $<HTMLInputElement>('#sound')
   sound.checked = !getSettings().muted
   sound.addEventListener('change', () => updateSettings({ muted: !sound.checked }))
+
+  const speech = $<HTMLInputElement>('#speech')
+  speech.checked = getSettings().speech
+  speech.addEventListener('change', () => updateSettings({ speech: speech.checked }))
 
   const themeGroup = $<HTMLDivElement>('#theme')
   const paintTheme = () => {

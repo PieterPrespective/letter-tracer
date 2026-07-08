@@ -12,6 +12,7 @@ import { layoutGlyphs } from '../../geometry/layout'
 import { TraceEngine } from '../../tracing/engine'
 import { scoreGlyph } from '../../tracing/scoring'
 import { playCelebrate, playStrokeDone, unlockAudio } from '../../util/audio'
+import { cancelSpeech, pronounceItem } from '../../util/speech'
 import { onThemeChange } from '../../theme'
 import type { ContentItem } from '../../model/types'
 
@@ -36,6 +37,7 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
         <button id="back" class="round" type="button" aria-label="Terug">←</button>
         <h1>${label} <span class="prompt"></span></h1>
         <span id="progress" class="progress-pill"></span>
+        <button id="say" class="round" type="button" aria-label="Uitspraak">🔊</button>
         <button id="clear" class="round" type="button" aria-label="Opnieuw">↺</button>
       </header>
       <canvas id="trace"></canvas>
@@ -87,6 +89,7 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
     nextBtn.hidden = false
     feedback.celebrate({ x: surface.cssWidth / 2, y: surface.cssHeight * 0.45 }, performance.now())
     playCelebrate()
+    pronounceItem(item) // say the word/letter/number as a reward
   }
 
   function onChange() {
@@ -152,6 +155,7 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
   canvas.addEventListener('pointerdown', onFirstDown, { once: true })
 
   $('#back').addEventListener('click', opts.onBack)
+  $('#say').addEventListener('click', () => pronounceItem(item))
   $('#clear').addEventListener('click', () => {
     current = 0
     engine = new TraceEngine(glyphs[current])
@@ -188,6 +192,7 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
       ro.disconnect()
       detachPointer()
       unsubTheme()
+      cancelSpeech()
       canvas.removeEventListener('pointerdown', onFirstDown)
       root.innerHTML = ''
     },

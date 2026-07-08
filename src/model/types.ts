@@ -40,6 +40,10 @@ export interface ContentItem {
   sum?: { a: number; op: '+' | '-'; b: number; result: number }
   /** Optional illustration of the word's meaning (mainly for `word` items). */
   image?: WordImage
+  /** Optional override text for text-to-speech (defaults derived from type). */
+  say?: string
+  /** Optional pre-recorded pronunciation clip URL (phase 2; wins over TTS). */
+  audioSrc?: string
   tags?: string[]
   source: 'base' | 'user'
 }

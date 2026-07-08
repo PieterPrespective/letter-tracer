@@ -6,11 +6,12 @@ export type ThemeSetting = 'system' | 'light' | 'dark'
 
 export interface Settings {
   muted: boolean
+  speech: boolean
   theme: ThemeSetting
 }
 
 const KEY = 'lt-settings'
-const DEFAULTS: Settings = { muted: false, theme: 'system' }
+const DEFAULTS: Settings = { muted: false, speech: true, theme: 'system' }
 
 let cache: Settings | null = null
 
