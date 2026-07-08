@@ -5,4 +5,4 @@ import './style.css'
 import { App } from './app'
 
 const root = document.querySelector<HTMLDivElement>('#app')!
-new App(root).start()
+void new App(root).start()

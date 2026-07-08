@@ -1,14 +1,15 @@
 // Home picker: category tabs (Letters / Cijfers / Woorden / Sommen) over a grid
-// of glyph-preview tiles. A parent-gated settings panel toggles sound.
+// of glyph-preview tiles, reading from the content registry so parent-added
+// words and sums appear. A parent-gated gear opens the editor.
 // See Prompts/lt-01/07-ui-ux-and-feedback.md.
 
-import { listItems } from '../../model/glyph-library'
+import { content } from '../../model/content'
 import { drawGlyphsPreview } from '../../render/glyph-renderer'
-import { getSettings, updateSettings } from '../../state/settings'
 import type { ContentItem } from '../../model/types'
 
 export interface HomeScreenOptions {
   onSelect: (items: ContentItem[], index: number) => void
+  onEditor: () => void
 }
 
 interface Category {
@@ -19,12 +20,12 @@ interface Category {
 }
 
 function categories(): Category[] {
-  const digits = listItems('number').filter((i) => i.tags?.includes('cijfer'))
+  const digits = content.list('number').filter((i) => i.tags?.includes('cijfer'))
   return [
-    { key: 'letters', label: 'Letters', items: listItems('letter') },
+    { key: 'letters', label: 'Letters', items: content.list('letter') },
     { key: 'cijfers', label: 'Cijfers', items: digits },
-    { key: 'woorden', label: 'Woorden', items: listItems('word'), empty: 'Nog geen woorden — voeg ze straks toe.' },
-    { key: 'sommen', label: 'Sommen', items: listItems('sum'), empty: 'Nog geen sommen — komt eraan.' },
+    { key: 'woorden', label: 'Woorden', items: content.list('word'), empty: 'Nog geen woorden — voeg ze toe via ⚙.' },
+    { key: 'sommen', label: 'Sommen', items: content.list('sum'), empty: 'Nog geen sommen — voeg ze toe via ⚙.' },
   ]
 }
 
@@ -59,7 +60,7 @@ export function createHomeScreen(root: HTMLElement, opts: HomeScreenOptions): { 
     <main class="home">
       <header class="home-head">
         <h1>Letter Tracer</h1>
-        <button id="settings" class="round" type="button" aria-label="Instellingen">⚙</button>
+        <button id="settings" class="round" type="button" aria-label="Voor de ouders">⚙</button>
       </header>
       <nav class="tabs" role="tablist"></nav>
       <div id="grid" class="grid"></div>
@@ -104,7 +105,7 @@ export function createHomeScreen(root: HTMLElement, opts: HomeScreenOptions): { 
   }
 
   const settingsBtn = root.querySelector<HTMLButtonElement>('#settings')!
-  const onSettings = () => openParentGate()
+  const onSettings = () => openParentGate(opts.onEditor)
   settingsBtn.addEventListener('click', onSettings)
 
   renderTabs()
@@ -118,9 +119,8 @@ export function createHomeScreen(root: HTMLElement, opts: HomeScreenOptions): { 
   }
 }
 
-// --- Parent gate + settings ------------------------------------------------
-
-function openParentGate(): void {
+/** A lightweight adult check (a small sum) before opening the editor. */
+function openParentGate(onPass: () => void): void {
   const a = 2 + Math.floor(Math.random() * 6)
   const b = 2 + Math.floor(Math.random() * 6)
   const overlay = document.createElement('div')
@@ -143,37 +143,18 @@ function openParentGate(): void {
   })
   const input = overlay.querySelector<HTMLInputElement>('#gate')!
   input.focus()
-  overlay.querySelector('#ok')!.addEventListener('click', () => {
+  const submit = () => {
     if (Number(input.value) === a + b) {
       overlay.remove()
-      openSettings()
+      onPass()
     } else {
       overlay.querySelector('.modal')!.classList.add('shake')
       input.value = ''
       input.focus()
     }
-  })
-}
-
-function openSettings(): void {
-  const muted = getSettings().muted
-  const overlay = document.createElement('div')
-  overlay.className = 'modal-overlay'
-  overlay.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Instellingen">
-      <h2>Instellingen</h2>
-      <label class="row"><span>Geluid</span>
-        <input id="sound" type="checkbox" ${muted ? '' : 'checked'} />
-      </label>
-      <div class="modal-actions"><button id="done" type="button">Klaar</button></div>
-    </div>
-  `
-  document.body.appendChild(overlay)
-  const sound = overlay.querySelector<HTMLInputElement>('#sound')!
-  sound.addEventListener('change', () => updateSettings({ muted: !sound.checked }))
-  const close = () => overlay.remove()
-  overlay.querySelector('#done')!.addEventListener('click', close)
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) close()
+  }
+  overlay.querySelector('#ok')!.addEventListener('click', submit)
+  input.addEventListener('keydown', (e) => {
+    if ((e as KeyboardEvent).key === 'Enter') submit()
   })
 }

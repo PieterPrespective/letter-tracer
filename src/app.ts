@@ -4,6 +4,8 @@
 
 import { createHomeScreen } from './ui/screens/home'
 import { createTraceScreen } from './ui/screens/trace'
+import { createEditorScreen } from './ui/screens/editor'
+import { content } from './model/content'
 import { itemForChar } from './model/glyph-library'
 import type { ContentItem } from './model/types'
 
@@ -19,7 +21,8 @@ export class App {
     this.debug = new URLSearchParams(location.search).has('debug')
   }
 
-  start(): void {
+  async start(): Promise<void> {
+    await content.init()
     // Deep-link: ?char= opens that glyph directly (handy for review/testing).
     const requested = new URLSearchParams(location.search).get('char')
     const item = requested ? itemForChar(requested) : undefined
@@ -33,7 +36,12 @@ export class App {
   }
 
   private showHome(): void {
-    this.mount((root) => createHomeScreen(root, { onSelect: (items, i) => this.showTrace(items, i) }))
+    this.mount((root) =>
+      createHomeScreen(root, {
+        onSelect: (items, i) => this.showTrace(items, i),
+        onEditor: () => this.showEditor(),
+      }),
+    )
   }
 
   private showTrace(items: ContentItem[], index: number): void {
@@ -46,5 +54,9 @@ export class App {
         onNavigate: (i) => this.showTrace(items, i),
       }),
     )
+  }
+
+  private showEditor(): void {
+    this.mount((root) => createEditorScreen(root, { onBack: () => this.showHome() }))
   }
 }
