@@ -36,8 +36,6 @@ Dutch reviewer has confirmed start/direction/order.
 
 ## Author notes / open items (⚠️)
 
-- **s / S** — the double-curve is a little lumpy; recognizable but a candidate
-  for a cleaner two-arc shape.
 - **r** — the arch is minimal; confirm it reads as an `r` at small sizes.
 - **a** — single-story "ronde a" (bowl + right stem). Confirm this matches the
   Pennenstreken model (start at the top of the bowl, sweep left).
