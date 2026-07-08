@@ -4,7 +4,8 @@
 
 import { content } from '../../model/content'
 import { composeSum, composeWord } from '../../model/compose'
-import { getSettings, updateSettings } from '../../state/settings'
+import { getSettings, updateSettings, type ThemeSetting } from '../../state/settings'
+import { applyTheme } from '../../theme'
 import type { ContentItem } from '../../model/types'
 
 export interface EditorScreenOptions {
@@ -21,6 +22,15 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
       <div class="editor-body">
         <section class="card">
           <label class="row"><span>Geluid aan</span><input id="sound" type="checkbox" /></label>
+        </section>
+
+        <section class="card">
+          <div class="row"><span>Weergave</span></div>
+          <div class="segmented" id="theme" role="group" aria-label="Weergave">
+            <button type="button" data-theme-val="system">Systeem</button>
+            <button type="button" data-theme-val="light">Licht</button>
+            <button type="button" data-theme-val="dark">Donker</button>
+          </div>
         </section>
 
         <section class="card">
@@ -61,6 +71,22 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
   const sound = $<HTMLInputElement>('#sound')
   sound.checked = !getSettings().muted
   sound.addEventListener('change', () => updateSettings({ muted: !sound.checked }))
+
+  const themeGroup = $<HTMLDivElement>('#theme')
+  const paintTheme = () => {
+    const active = getSettings().theme
+    for (const b of themeGroup.querySelectorAll<HTMLButtonElement>('button')) {
+      b.classList.toggle('active', b.dataset.themeVal === active)
+    }
+  }
+  themeGroup.addEventListener('click', (e) => {
+    const val = (e.target as HTMLElement).closest<HTMLButtonElement>('button')?.dataset.themeVal as ThemeSetting | undefined
+    if (!val) return
+    updateSettings({ theme: val })
+    applyTheme(val)
+    paintTheme()
+  })
+  paintTheme()
 
   const wordInput = $<HTMLInputElement>('#word')
   const wordMsg = $('#wordMsg')

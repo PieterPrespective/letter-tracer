@@ -5,6 +5,7 @@
 
 import { content } from '../../model/content'
 import { drawGlyphsPreview } from '../../render/glyph-renderer'
+import { onThemeChange } from '../../theme'
 import type { ContentItem } from '../../model/types'
 
 export interface HomeScreenOptions {
@@ -111,9 +112,13 @@ export function createHomeScreen(root: HTMLElement, opts: HomeScreenOptions): { 
   renderTabs()
   renderGrid()
 
+  // Tile previews are canvas — repaint them when the theme changes.
+  const unsubTheme = onThemeChange(renderGrid)
+
   return {
     destroy() {
       settingsBtn.removeEventListener('click', onSettings)
+      unsubTheme()
       root.innerHTML = ''
     },
   }

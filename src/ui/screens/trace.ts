@@ -12,6 +12,7 @@ import { layoutGlyphs } from '../../geometry/layout'
 import { TraceEngine } from '../../tracing/engine'
 import { scoreGlyph } from '../../tracing/scoring'
 import { playCelebrate, playStrokeDone, unlockAudio } from '../../util/audio'
+import { onThemeChange } from '../../theme'
 import type { ContentItem } from '../../model/types'
 
 export interface TraceScreenOptions {
@@ -158,6 +159,11 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
   })
   ro.observe(canvas)
 
+  // Canvas colours don't follow CSS automatically — redraw when the theme flips.
+  const unsubTheme = onThemeChange(() => {
+    dirty = true
+  })
+
   raf = requestAnimationFrame(frame)
 
   return {
@@ -165,6 +171,7 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
       cancelAnimationFrame(raf)
       ro.disconnect()
       detachPointer()
+      unsubTheme()
       canvas.removeEventListener('pointerdown', onFirstDown)
       root.innerHTML = ''
     },

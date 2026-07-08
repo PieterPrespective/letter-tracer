@@ -6,6 +6,58 @@
   --accent: #e2683c;
   --accent-2: #6c9bd1;
   --line: rgba(0, 0, 0, 0.1);
+  --success: #2f6b3f;
+  --field-bg: #ffffff;
+  --toast-bg: #3a3226;
+  /* Canvas tokens — read by the renderer (src/render/theme.ts). */
+  --road: #e7dcc4;
+  --guide: #c9bda0;
+  --current: #6c9bd1;
+  --trace-ink: #2f6b3f;
+  --trace-ink-active: #3f8f52;
+  --start: #e2683c;
+}
+
+/* Dark palette. Applied when the system is dark (and no manual override) or
+   when an explicit data-theme="dark" is set. Light manual override falls back
+   to the :root defaults because the media rule is scoped to :not([data-theme]). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #1c1a17;
+    --panel: #262320;
+    --ink: #ece4d4;
+    --muted: #a89c86;
+    --accent: #f0895f;
+    --accent-2: #8fb6e0;
+    --line: rgba(255, 255, 255, 0.14);
+    --success: #7fd39a;
+    --field-bg: #322e29;
+    --toast-bg: #38332c;
+    --road: #3a352c;
+    --guide: #554d3f;
+    --current: #8fb6e0;
+    --trace-ink: #7fd39a;
+    --trace-ink-active: #a6e6ba;
+    --start: #f0895f;
+  }
+}
+:root[data-theme='dark'] {
+  --bg: #1c1a17;
+  --panel: #262320;
+  --ink: #ece4d4;
+  --muted: #a89c86;
+  --accent: #f0895f;
+  --accent-2: #8fb6e0;
+  --line: rgba(255, 255, 255, 0.14);
+  --success: #7fd39a;
+  --field-bg: #322e29;
+  --toast-bg: #38332c;
+  --road: #3a352c;
+  --guide: #554d3f;
+  --current: #8fb6e0;
+  --trace-ink: #7fd39a;
+  --trace-ink-active: #a6e6ba;
+  --start: #f0895f;
 }
 
 * {
@@ -196,7 +248,7 @@ button {
 }
 
 .message.done {
-  color: #2f6b3f;
+  color: var(--success);
   font-weight: 700;
 }
 
@@ -265,7 +317,7 @@ button {
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--field-bg);
 }
 
 .sum-row input[type='number'] {
@@ -278,7 +330,7 @@ button {
   padding: 10px;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--field-bg);
 }
 
 .form-row button {
@@ -305,7 +357,7 @@ button {
 }
 
 .form-msg.good {
-  color: #2f6b3f;
+  color: var(--success);
 }
 
 .user-list {
@@ -357,6 +409,30 @@ button {
 .editor .row input[type='checkbox'] {
   width: 28px;
   height: 28px;
+}
+
+.segmented {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.segmented button {
+  flex: 1;
+  border: none;
+  border-radius: 12px;
+  padding: 10px;
+  min-height: 44px;
+  font-size: 1rem;
+  background: var(--field-bg);
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.segmented button.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: none;
 }
 
 /* ---- Modal (parent gate + settings) -------------------------------------- */
@@ -450,7 +526,7 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--ink);
+  background: var(--toast-bg);
   color: #fff;
   padding: 10px 12px 10px 18px;
   border-radius: 999px;

@@ -2,12 +2,15 @@
 // and richer preferences (tolerance profiles, per-child) arrive in M4/M6; for
 // now this just carries the global mute so audio can respect it everywhere.
 
+export type ThemeSetting = 'system' | 'light' | 'dark'
+
 export interface Settings {
   muted: boolean
+  theme: ThemeSetting
 }
 
 const KEY = 'lt-settings'
-const DEFAULTS: Settings = { muted: false }
+const DEFAULTS: Settings = { muted: false, theme: 'system' }
 
 let cache: Settings | null = null
 

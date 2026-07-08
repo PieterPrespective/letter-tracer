@@ -5,20 +5,11 @@
 import { GLYPH_SIZE, config } from '../config'
 import { type Transform, glyphToCanvas } from '../geometry/box'
 import { layoutGlyphs } from '../geometry/layout'
+import { canvasColors } from '../theme'
 import type { Point } from '../geometry/point'
 import type { Glyph } from '../model/types'
 import type { CanvasSurface } from './canvas'
 import type { TraceEngine } from '../tracing/engine'
-
-const COLORS = {
-  bg: '#fdf6e3',
-  road: '#e7dcc4',
-  guide: '#c9bda0',
-  current: '#6c9bd1',
-  ink: '#2f6b3f',
-  inkCurrent: '#3f8f52',
-  start: '#e2683c',
-}
 
 function strokeTolerancePx(strokeToleranceFraction: number | undefined, t: Transform): number {
   const frac = strokeToleranceFraction ?? config.toleranceFraction
@@ -40,11 +31,11 @@ export function drawGlyphsPreview(
   glyphs: Glyph[],
   w: number,
   h: number,
-  color = COLORS.ink,
+  color?: string,
 ): void {
   const layout = layoutGlyphs(glyphs.length, w, h, 0.14)
   ctx.clearRect(0, 0, w, h)
-  ctx.strokeStyle = color
+  ctx.strokeStyle = color ?? canvasColors().ink
   ctx.lineWidth = Math.max(2, 44 * layout[0].scale)
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
@@ -72,11 +63,12 @@ function drawGlyph(
   debug: boolean,
 ): void {
   const strokes = glyph.strokes
+  const c = canvasColors()
 
   // Road band under the letter (not for already-completed glyphs).
   if (mode !== 'done') {
     for (const s of strokes) {
-      ctx.strokeStyle = COLORS.road
+      ctx.strokeStyle = c.road
       ctx.lineWidth = 2 * strokeTolerancePx(s.tolerance, t)
       pathTo(ctx, s.points, t)
       ctx.stroke()
@@ -87,15 +79,15 @@ function drawGlyph(
   // active glyph, faint dashed guide for everything else.
   for (let i = 0; i < strokes.length; i++) {
     if (mode === 'done') {
-      ctx.strokeStyle = COLORS.ink
+      ctx.strokeStyle = c.ink
       ctx.lineWidth = 10
       ctx.setLineDash([])
     } else if (mode === 'active' && engine && i === engine.currentStroke) {
-      ctx.strokeStyle = COLORS.current
+      ctx.strokeStyle = c.current
       ctx.lineWidth = 4
       ctx.setLineDash([])
     } else {
-      ctx.strokeStyle = COLORS.guide
+      ctx.strokeStyle = c.guide
       ctx.lineWidth = 2
       ctx.setLineDash([8, 10])
     }
@@ -106,7 +98,7 @@ function drawGlyph(
 
   // The child's ink on the active glyph + the start dot for the current stroke.
   if (mode === 'active' && engine) {
-    ctx.strokeStyle = COLORS.ink
+    ctx.strokeStyle = c.ink
     ctx.lineWidth = 10
     for (const trail of engine.completedTrails) {
       if (trail.length < 2) continue
@@ -114,13 +106,13 @@ function drawGlyph(
       ctx.stroke()
     }
     if (engine.acceptedTrail.length >= 2) {
-      ctx.strokeStyle = COLORS.inkCurrent
+      ctx.strokeStyle = c.inkActive
       pathTo(ctx, engine.acceptedTrail, t)
       ctx.stroke()
     }
     if (!engine.isComplete) {
       const start = glyphToCanvas(engine.startPoint(), t)
-      ctx.fillStyle = COLORS.start
+      ctx.fillStyle = c.start
       ctx.beginPath()
       ctx.arc(start.x, start.y, 14, 0, 2 * Math.PI)
       ctx.fill()
@@ -145,7 +137,7 @@ export function drawWordScene(
 ): void {
   const { ctx } = surface
   ctx.clearRect(0, 0, surface.cssWidth, surface.cssHeight)
-  ctx.fillStyle = COLORS.bg
+  ctx.fillStyle = canvasColors().bg
   ctx.fillRect(0, 0, surface.cssWidth, surface.cssHeight)
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
