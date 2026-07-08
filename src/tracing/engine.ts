@@ -122,6 +122,12 @@ export class TraceEngine {
       this.strokeDevCount = 0
       this.active = true
       this.status = 'tracing'
+      // Dots (i/j) and other sub-tolerance strokes complete on a tap: there is
+      // no meaningful path to follow, so landing near them is enough.
+      if (t.length <= t.tolerance * 0.6) {
+        this.progress = 1
+        this.status = 'stroke-complete'
+      }
       return true
     }
     // Wrong start (or wrong end / wrong direction): reject, nudge the child.
@@ -131,7 +137,9 @@ export class TraceEngine {
 
   /** Pen-move sample. Advances progress only for on-path, forward input. */
   addPoint(p: Point): void {
-    if (!this.active) return
+    // Latch completion: once the stroke is done, ignore further movement until
+    // pen-up. Without this, a natural overshoot past the end un-completes it.
+    if (!this.active || this.status === 'stroke-complete') return
     const t = this.target()
     const radius = Math.max(t.tolerance * 4, t.length * 0.25)
     const hit: PolylineHit = closestOnPolyline(p, t.pts, t.cum, {
