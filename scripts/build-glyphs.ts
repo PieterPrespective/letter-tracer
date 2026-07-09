@@ -96,7 +96,7 @@ const operators: Glyph[] = [
 // Uppercase
 // ---------------------------------------------------------------------------
 const upper: Glyph[] = [
-  G('A', [seg([[300, BASE], [500, CAP]]), seg([[500, CAP], [700, BASE]]), seg([[370, 560], [630, 560]])]),
+  G('A', [seg([[500, CAP], [300, BASE]], 'Van de punt schuin omlaag'), seg([[500, CAP], [700, BASE]], 'En de andere kant'), seg([[370, 560], [630, 560]], 'Streepje in het midden')]),
   G('B', [
     seg([[330, CAP], [330, BASE]], 'Van boven naar beneden'),
     join([[{ x: 330, y: CAP }], arc(330, 315, 190, 165, -90, 90, 16)]),
@@ -134,15 +134,21 @@ const upper: Glyph[] = [
 const xMid = (XT + BASE) / 2
 const lower: Glyph[] = [
   G('a', [
-    seg([[670, XT], [670, BASE]], 'Eerst de stok'),
-    join([arc(670, xMid, 200, (BASE - XT) / 2, 270, 90, 26)], 'Boog naar links'),
+    join([arc(500, xMid, 170, 200, -90, -450, 32)], 'Eerst het rondje, linksom'),
+    seg([[670, XT], [670, BASE]], 'Dan de stok naar beneden'),
   ]),
   G('b', [seg([[330, CAP], [330, BASE]], 'Eerst de stok'), join([arc(330, xMid, 200, (BASE - XT) / 2, -90, 90, 26)], 'Boog naar rechts')]),
   G('c', [join([arc(510, xMid, 190, (BASE - XT) / 2, -55, -305, 26)], 'Open kant naar rechts')]),
-  G('d', [seg([[670, CAP], [670, BASE]]), join([arc(670, xMid, 200, (BASE - XT) / 2, 270, 90, 26)], 'Boog naar links')]),
+  G('d', [
+    join([arc(500, xMid, 170, 200, -90, -450, 32)], 'Eerst het rondje, linksom'),
+    seg([[670, CAP], [670, BASE]], 'Dan de hoge stok naar beneden'),
+  ]),
   G('e', [join([[{ x: 340, y: xMid + 10 }, { x: 660, y: xMid + 10 }], arc(500, xMid, 185, (BASE - XT) / 2, -20, -290, 28)], 'Streepje, dan rond')]),
   G('f', [join([arc(560, 330, 150, 150, -30, -180, 14), [{ x: 410, y: 330 }, { x: 410, y: BASE }]]), seg([[300, 470], [560, 470]])]),
-  G('g', [join([arc(490, xMid, 180, (BASE - XT) / 2, -90, -450, 30)]), join([[{ x: 670, y: XT }, { x: 670, y: 870 }], arc(525, 870, 145, 130, 0, 150, 12)])]),
+  G('g', [
+    join([arc(500, xMid, 170, 200, -90, -450, 32)], 'Eerst het rondje, linksom'),
+    seg([[670, XT], [670, DESC]], 'Staart recht naar beneden'),
+  ]),
   G('h', [seg([[330, CAP], [330, BASE]]), join([[{ x: 330, y: 500 }], arc(490, 500, 165, 150, 180, 360, 16), [{ x: 655, y: BASE }]], 'Boogje omhoog en naar beneden')]),
   G('i', [seg([[500, XT], [500, BASE]]), seg([[500, 250], [500, 258]], 'De stip')]),
   G('j', [join([[{ x: 560, y: XT }, { x: 560, y: 850 }], arc(430, 850, 130, 130, 0, 160, 12)]), seg([[560, 250], [560, 258]], 'De stip')]),
@@ -156,15 +162,18 @@ const lower: Glyph[] = [
   G('n', [seg([[330, XT], [330, BASE]]), join([[{ x: 330, y: 500 }], arc(490, 500, 165, 150, 180, 360, 16), [{ x: 655, y: BASE }]])]),
   G('o', [join([arc(500, xMid, 175, (BASE - XT) / 2, -90, -450, 32)], 'Begin bovenaan, ga rond')]),
   G('p', [seg([[330, XT], [330, DESC]], 'Stok naar beneden'), join([arc(330, xMid, 200, (BASE - XT) / 2, -90, 90, 26)], 'Boog naar rechts')]),
-  G('q', [seg([[670, XT], [670, DESC]], 'Stok naar beneden'), join([arc(670, xMid, 200, (BASE - XT) / 2, 270, 90, 26)], 'Boog naar links')]),
+  G('q', [
+    join([arc(500, xMid, 170, 200, -90, -450, 32)], 'Eerst het rondje, linksom'),
+    join([[{ x: 670, y: XT }, { x: 670, y: 860 }], arc(715, 860, 45, 50, 180, 30, 10)], 'Staart met haakje naar rechts'),
+  ]),
   G('r', [seg([[350, XT], [350, BASE]]), join([[{ x: 350, y: 470 }], arc(500, 480, 160, 130, 200, 320, 12)])]),
   G('s', [seg([[585, 455], [545, 415], [475, 400], [410, 425], [388, 480], [410, 535], [485, 568], [560, 600], [600, 655], [575, 710], [500, 735], [425, 720], [388, 675]], 'Als een slang')]),
-  G('t', [seg([[470, 290], [470, 690]]), join([[{ x: 470, y: 690 }], arc(560, 660, 110, 110, 90, 20, 8)]), seg([[320, 400], [610, 400]])]),
+  G('t', [seg([[470, 290], [470, BASE]], 'Stok recht naar beneden'), seg([[320, 395], [610, 395]], 'Streepje erover')]),
   G('u', [join([[{ x: 330, y: XT }, { x: 330, y: 620 }], arc(500, 620, 170, 160, 180, 0, 20), [{ x: 670, y: 620 }, { x: 670, y: XT }]])]),
   G('v', [seg([[330, XT], [500, BASE]]), seg([[500, BASE], [670, XT]])]),
   G('w', [seg([[280, XT], [400, BASE]]), seg([[400, BASE], [500, 520]]), seg([[500, 520], [600, BASE]]), seg([[600, BASE], [720, XT]])]),
   G('x', [seg([[340, XT], [660, BASE]]), seg([[660, XT], [340, BASE]])]),
-  G('y', [seg([[330, XT], [500, 690]]), join([[{ x: 670, y: XT }, { x: 500, y: 690 }], arc(360, 820, 150, 140, 0, 150, 12)])]),
+  G('y', [seg([[330, XT], [500, 700]], 'Schuin omlaag naar het midden'), seg([[670, XT], [380, DESC]], 'Schuin door tot in de staart')]),
   G('z', [seg([[340, XT], [660, XT]]), seg([[660, XT], [340, BASE]]), seg([[340, BASE], [660, BASE]])]),
 ]
 

@@ -34,6 +34,27 @@ Dutch reviewer has confirmed start/direction/order.
   ideal path. This catches degenerate/broken data but says nothing about
   pedagogy.
 
+## Zaner-Bloser Manuscript re-referencing (2026-07)
+
+Lowercase shapes and stroke sequences were re-referenced to the **Zaner-Bloser
+Manuscript** method. Reference images live in
+`Prompts/Zaner-Bloser Manuscript Samples/` (Lowercase + Uppercase). Changes made
+in `scripts/build-glyphs.ts`:
+
+- **a, d** — now **circle-first, then stem** (was stem-first + half-bowl).
+- **g** — **straight descender, no hook** (round bowl + straight tail).
+- **q** — **circle-first + straight descender with a small right foot**.
+- **t** — **straight stem + crossbar**, bottom hook removed.
+- **y** — **two straight diagonals into the descender**, loop removed.
+- **A** (capital) — both diagonals now drawn **apex-down** (start at the point).
+- b, c, e, f, h, i, j, k, l, m, n, o, p, r, s, u, v, w, x, z already matched ZB.
+
+Where ZB retraces the stem (m, n, h, r), we keep the engine-friendly
+decomposition (stem stroke + separate arch/shoulder stroke from mid-stem) so a
+child never has to retrace a line. The remaining capitals match ZB shapes; the
+sample sheet's slant/tail flourishes are stylistic and were not adopted (upright
+block capitals read cleaner for a 4–6 y/o).
+
 ## Author notes / open items (⚠️)
 
 - **r** — the arch is minimal; confirm it reads as an `r` at small sizes.
