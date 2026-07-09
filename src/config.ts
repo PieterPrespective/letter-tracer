@@ -6,6 +6,16 @@
 /** Glyph coordinate box: strokes live in 0..GLYPH_SIZE on both axes, y-down. */
 export const GLYPH_SIZE = 1000
 
+/** CSS absolute-length conversion (1in = 96px = 2.54cm). */
+export const CM_TO_CSS_PX = 96 / 2.54
+
+/**
+ * Below this on-screen glyph height, the row layout is too small to trace
+ * comfortably, so we switch to focused (one-glyph-at-a-time) mode. Real-world
+ * target: a glyph should be at least ~3 cm tall. See Prompts/lt-04.
+ */
+export const MIN_GLYPH_CM = 3
+
 export interface TraceConfig {
   /** Base hit-test tolerance as a fraction of GLYPH_SIZE. */
   toleranceFraction: number

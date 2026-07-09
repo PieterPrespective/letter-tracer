@@ -4,7 +4,7 @@
 // A single glyph reduces to the same fit as fitGlyphBox. See
 // Prompts/lt-01/02-data-model.md (multi-glyph layout).
 
-import { GLYPH_SIZE } from '../config'
+import { CM_TO_CSS_PX, GLYPH_SIZE, MIN_GLYPH_CM } from '../config'
 import type { Transform } from './box'
 
 /** Horizontal step between adjacent glyph origins, in glyph units. */
@@ -21,3 +21,18 @@ export function layoutGlyphs(count: number, canvasW: number, canvasH: number, pa
   for (let i = 0; i < n; i++) out.push({ scale, offsetX: offsetX + i * GLYPH_ADVANCE * scale, offsetY })
   return out
 }
+
+export type TraceMode = 'row' | 'focused'
+
+/**
+ * Choose how to present a multi-glyph exercise. A single glyph is always shown
+ * full-size ("row" of one). Otherwise focus one glyph at a time when the parent
+ * forces "grote letters", or when the all-at-once row would render each glyph
+ * shorter than MIN_GLYPH_CM on screen.
+ */
+export function chooseTraceMode(rowGlyphHeightPx: number, groteLetters: boolean, glyphCount: number): TraceMode {
+  if (glyphCount <= 1) return 'row'
+  if (groteLetters) return 'focused'
+  return rowGlyphHeightPx < MIN_GLYPH_CM * CM_TO_CSS_PX ? 'focused' : 'row'
+}
+

@@ -10,10 +10,12 @@ export interface Settings {
   theme: ThemeSetting
   /** Preferred Dutch TTS voice (voiceURI); empty = auto-select. */
   voiceURI: string
+  /** Force focused one-glyph-at-a-time tracing (big letters). */
+  groteLetters: boolean
 }
 
 const KEY = 'lt-settings'
-const DEFAULTS: Settings = { muted: false, speech: true, theme: 'system', voiceURI: '' }
+const DEFAULTS: Settings = { muted: false, speech: true, theme: 'system', voiceURI: '', groteLetters: false }
 
 let cache: Settings | null = null
 

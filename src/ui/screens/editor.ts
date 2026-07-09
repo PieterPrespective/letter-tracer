@@ -35,6 +35,7 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
             <button type="button" data-theme-val="light">Licht</button>
             <button type="button" data-theme-val="dark">Donker</button>
           </div>
+          <label class="row"><span>Grote letters</span><input id="grote" type="checkbox" /></label>
         </section>
 
         <section class="card">
@@ -125,6 +126,10 @@ export function createEditorScreen(root: HTMLElement, opts: EditorScreenOptions)
     paintTheme()
   })
   paintTheme()
+
+  const grote = $<HTMLInputElement>('#grote')
+  grote.checked = getSettings().groteLetters
+  grote.addEventListener('change', () => updateSettings({ groteLetters: grote.checked }))
 
   const wordInput = $<HTMLInputElement>('#word')
   const wordMsg = $('#wordMsg')

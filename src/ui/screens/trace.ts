@@ -1,21 +1,25 @@
-// The tracing screen. Handles a single glyph or a multi-glyph word/sum: glyphs
-// are laid out in a row and traced left-to-right, auto-advancing as each one is
-// completed. Fires pops, celebration, sound, and scoring. Returns a handle with
-// destroy() so the app shell can tear it down cleanly.
+// The tracing screen. Handles a single glyph or a multi-glyph word/sum, traced
+// left-to-right with auto-advance. Two layouts (Prompts/lt-04): "row" shows the
+// whole exercise at once; "focused" shows one big glyph at a time with a compact
+// word strip — chosen so a glyph is never smaller than ~3cm (or forced via the
+// "grote letters" setting). Returns a destroy() handle for clean teardown.
 
 import { CanvasSurface } from '../../render/canvas'
-import { drawWordScene } from '../../render/glyph-renderer'
+import { drawWordScene, drawGlyphsPreview } from '../../render/glyph-renderer'
 import { FeedbackLayer } from '../../render/feedback'
 import { attachPointerInput } from '../../input/pointer'
 import { glyphToCanvas } from '../../geometry/box'
-import { layoutGlyphs } from '../../geometry/layout'
+import { type TraceMode, chooseTraceMode, layoutGlyphs } from '../../geometry/layout'
+import { GLYPH_SIZE } from '../../config'
 import { TraceEngine } from '../../tracing/engine'
 import { handsForCount } from '../../model/fingers'
 import { handSVG } from '../../render/hand'
 import { scoreGlyph } from '../../tracing/scoring'
 import { playCelebrate, playStrokeDone, unlockAudio } from '../../util/audio'
 import { cancelSpeech, pronounceItem } from '../../util/speech'
-import { onThemeChange } from '../../theme'
+import { canvasColors, onThemeChange } from '../../theme'
+import { getSettings } from '../../state/settings'
+import type { Transform } from '../../geometry/box'
 import type { ContentItem } from '../../model/types'
 
 export interface TraceScreenOptions {
@@ -28,10 +32,24 @@ export interface TraceScreenOptions {
 
 const TYPE_LABEL: Record<string, string> = { letter: 'Letter', number: 'Cijfer', word: 'Woord', sum: 'Som' }
 
+type SumRole = { kind: 'operand'; value: number } | { kind: 'op' } | { kind: 'equals' } | { kind: 'result'; value: number }
+
+/** One role per glyph of a sum, so focused mode can show the right hands. */
+function sumRoles(sum: { a: number; op: '+' | '-'; b: number; result: number }): SumRole[] {
+  const roles: SumRole[] = []
+  for (const _ of String(sum.a)) roles.push({ kind: 'operand', value: sum.a })
+  roles.push({ kind: 'op' })
+  for (const _ of String(sum.b)) roles.push({ kind: 'operand', value: sum.b })
+  roles.push({ kind: 'equals' })
+  for (const _ of String(sum.result)) roles.push({ kind: 'result', value: sum.result })
+  return roles
+}
+
 export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): { destroy: () => void } {
   const item = opts.items[opts.index]
   const glyphs = item.glyphs
   const label = TYPE_LABEL[item.type] ?? 'Letter'
+  const roles = item.type === 'sum' && item.sum ? sumRoles(item.sum) : []
 
   root.innerHTML = `
     <main class="trace-screen">
@@ -42,6 +60,7 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
         <button id="say" class="round" type="button" aria-label="Uitspraak">🔊</button>
         <button id="clear" class="round" type="button" aria-label="Opnieuw">↺</button>
       </header>
+      <div id="wordstrip" class="wordstrip" hidden></div>
       <canvas id="trace"></canvas>
       <div id="fingers" class="fingers" hidden></div>
       <div class="tray">
@@ -57,9 +76,28 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
   const message = $('#message')
   const progress = $('#progress')
   const nextBtn = $<HTMLButtonElement>('#next')
-
-  // Finger-counting aid for sums: hands for each operand.
   const fingersEl = $<HTMLDivElement>('#fingers')
+  const wordstrip = $<HTMLDivElement>('#wordstrip')
+
+  const surface = new CanvasSurface(canvas)
+  const feedback = new FeedbackLayer()
+
+  let mode: TraceMode = 'row'
+  let layout: Transform[] = layoutGlyphs(glyphs.length, surface.cssWidth, surface.cssHeight)
+  let current = 0
+  let engine = new TraceEngine(glyphs[current])
+
+  let committed = 0
+  let devTotal = 0
+  let devCount = 0
+  let celebrated = false
+  let revealStart = 0
+  let dirty = true
+  let raf = 0
+
+  const TRACE_OPACITY = 0.14
+  const REVEAL_OPACITY = 0.55
+
   function handGroup(count: number): HTMLElement {
     const group = document.createElement('div')
     group.className = 'hand-group'
@@ -72,7 +110,25 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
     }
     return group
   }
-  if (item.type === 'sum' && item.sum) {
+
+  // Finger aid: in focused mode show only the current operand's hands; in row
+  // mode show both operands with the operator (there's room on a wide screen).
+  function renderFingers() {
+    fingersEl.innerHTML = ''
+    if (item.type !== 'sum' || !item.sum) {
+      fingersEl.hidden = true
+      return
+    }
+    if (mode === 'focused') {
+      const role = roles[current]
+      if (role && role.kind === 'operand') {
+        fingersEl.hidden = false
+        fingersEl.appendChild(handGroup(role.value))
+      } else {
+        fingersEl.hidden = true
+      }
+      return
+    }
     fingersEl.hidden = false
     fingersEl.appendChild(handGroup(item.sum.a))
     const op = document.createElement('span')
@@ -82,25 +138,50 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
     fingersEl.appendChild(handGroup(item.sum.b))
   }
 
-  const surface = new CanvasSurface(canvas)
-  let layout = layoutGlyphs(glyphs.length, surface.cssWidth, surface.cssHeight)
+  // Compact whole-word context in focused mode: mini previews, active highlighted.
+  function renderStrip() {
+    if (mode !== 'focused' || glyphs.length <= 1) {
+      wordstrip.hidden = true
+      wordstrip.innerHTML = ''
+      return
+    }
+    wordstrip.hidden = false
+    wordstrip.innerHTML = ''
+    const c = canvasColors()
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const size = 40
+    glyphs.forEach((g, i) => {
+      const cv = document.createElement('canvas')
+      cv.width = size * dpr
+      cv.height = size * dpr
+      cv.style.width = `${size}px`
+      cv.style.height = `${size}px`
+      cv.className = 'strip-glyph' + (i === current ? ' active' : i < current ? ' done' : '')
+      const ctx = cv.getContext('2d')
+      if (ctx) {
+        ctx.scale(dpr, dpr)
+        drawGlyphsPreview(ctx, [g], size, size, i < current ? c.ink : i === current ? c.inkActive : c.guide)
+      }
+      wordstrip.appendChild(cv)
+    })
+  }
 
-  let current = 0
-  let engine = new TraceEngine(glyphs[current])
-  const feedback = new FeedbackLayer()
+  function computeLayout() {
+    const rowLayout = layoutGlyphs(glyphs.length, surface.cssWidth, surface.cssHeight)
+    const rowGlyphPx = GLYPH_SIZE * rowLayout[0].scale
+    mode = chooseTraceMode(rowGlyphPx, getSettings().groteLetters, glyphs.length)
+    layout = mode === 'focused' ? glyphs.map(() => layoutGlyphs(1, surface.cssWidth, surface.cssHeight)[0]) : rowLayout
+    surface.transform = layout[current]
+    renderStrip()
+    renderFingers()
+  }
 
-  let committed = 0 // strokes committed in the current glyph
-  let devTotal = 0
-  let devCount = 0
-  let celebrated = false
-  let revealStart = 0
-  let dirty = true
-  let raf = 0
-
-  const TRACE_OPACITY = 0.14
-  const REVEAL_OPACITY = 0.55
-
-  surface.transform = layout[current]
+  // Keep transform / strip / fingers in sync after `current` changes.
+  function syncCurrent() {
+    surface.transform = layout[current]
+    renderStrip()
+    renderFingers()
+  }
 
   function strokeEndCanvas(strokeIndex: number) {
     const pts = glyphs[current].strokes[strokeIndex].points
@@ -116,7 +197,7 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
     nextBtn.hidden = false
     feedback.celebrate({ x: surface.cssWidth / 2, y: surface.cssHeight * 0.45 }, performance.now())
     playCelebrate()
-    pronounceItem(item) // say the word/letter/number as a reward
+    pronounceItem(item)
   }
 
   function onChange() {
@@ -130,11 +211,10 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
       devTotal += engine.meanDeviation
       devCount++
       if (current < glyphs.length - 1) {
-        // Advance to the next glyph of the word/sum.
         current++
         engine = new TraceEngine(glyphs[current])
-        surface.transform = layout[current]
         committed = 0
+        syncCurrent()
         playStrokeDone()
       } else {
         finishWord()
@@ -169,6 +249,7 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
         debug: opts.debug,
         image: item.image,
         imageOpacity: imageOpacity(now),
+        focused: mode === 'focused',
       })
       feedback.draw(surface.ctx, now)
       updateHud()
@@ -186,7 +267,6 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
   $('#clear').addEventListener('click', () => {
     current = 0
     engine = new TraceEngine(glyphs[current])
-    surface.transform = layout[current]
     committed = 0
     devTotal = 0
     devCount = 0
@@ -194,23 +274,25 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
     nextBtn.hidden = true
     message.textContent = ''
     message.classList.remove('done')
+    syncCurrent()
     dirty = true
   })
   nextBtn.addEventListener('click', () => opts.onNavigate((opts.index + 1) % opts.items.length))
 
   const ro = new ResizeObserver(() => {
     surface.resize()
-    layout = layoutGlyphs(glyphs.length, surface.cssWidth, surface.cssHeight)
-    surface.transform = layout[current]
+    computeLayout()
     dirty = true
   })
   ro.observe(canvas)
 
-  // Canvas colours don't follow CSS automatically — redraw when the theme flips.
+  // Canvas colours don't follow CSS automatically — redraw + repaint the strip.
   const unsubTheme = onThemeChange(() => {
+    renderStrip()
     dirty = true
   })
 
+  computeLayout()
   raf = requestAnimationFrame(frame)
 
   return {

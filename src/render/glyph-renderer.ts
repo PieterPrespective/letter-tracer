@@ -54,6 +54,8 @@ export interface DrawOptions {
   image?: WordImage
   /** Opacity 0..1 for the background image (faint while tracing, brighter on done). */
   imageOpacity?: number
+  /** Focused mode: draw only the active glyph (others live in the word strip). */
+  focused?: boolean
 }
 
 type GlyphMode = 'done' | 'active' | 'upcoming'
@@ -146,18 +148,25 @@ export function drawWordScene(
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
 
-  // Word illustration behind the letters (emoji), faint while tracing.
+  // Word illustration behind the letters (emoji), faint while tracing. Sized to
+  // the active glyph so it works in both row and focused layouts.
+  const tActive = layout[currentIndex]
   const opacity = opts.imageOpacity ?? 0
   if (opts.image?.kind === 'emoji' && opacity > 0) {
-    const t0 = layout[0]
-    const size = GLYPH_SIZE * t0.scale * 0.72
+    const size = GLYPH_SIZE * tActive.scale * 0.72
     ctx.save()
     ctx.globalAlpha = opacity
     ctx.font = `${size}px "Segoe UI Emoji", "Noto Color Emoji", sans-serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText(opts.image.value, surface.cssWidth / 2, t0.offsetY + (GLYPH_SIZE * t0.scale) / 2)
+    ctx.fillText(opts.image.value, surface.cssWidth / 2, tActive.offsetY + (GLYPH_SIZE * tActive.scale) / 2)
     ctx.restore()
+  }
+
+  if (opts.focused) {
+    // Only the active glyph is on the canvas; the rest live in the word strip.
+    drawGlyph(ctx, glyphs[currentIndex], tActive, 'active', engine, opts.debug ?? false)
+    return
   }
 
   glyphs.forEach((glyph, i) => {
