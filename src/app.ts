@@ -9,7 +9,7 @@ import { createEditorScreen } from './ui/screens/editor'
 import { content } from './model/content'
 import { itemForChar } from './model/glyph-library'
 import { canChoose } from './model/select-game'
-import { getSettings, updateSettings, type PracticeMode } from './state/settings'
+import { type PracticeMode } from './state/settings'
 import type { ContentItem } from './model/types'
 
 interface Screen {
@@ -47,7 +47,9 @@ export class App {
   private showHome(): void {
     this.mount((root) =>
       createHomeScreen(root, {
-        onSelect: (items, i) => this.showPractice(items, i, getSettings().mode),
+        // Always start on tracing (incl. the zoomed one-glyph mode on phones);
+        // Kiezen is a per-item toggle, never a sticky default that hides tracing.
+        onSelect: (items, i) => this.showPractice(items, i, 'overtrekken'),
         onEditor: () => this.showEditor(),
       }),
     )
@@ -64,11 +66,10 @@ export class App {
       items,
       index,
       onBack: () => this.showHome(),
+      // Keep the chosen mode while stepping through this word/sum list...
       onNavigate: (i: number) => this.showPractice(items, i, mode),
-      onSetMode: (m: PracticeMode) => {
-        updateSettings({ mode: m })
-        this.showPractice(items, index, m)
-      },
+      // ...but only for this visit — it isn't persisted as the home default.
+      onSetMode: (m: PracticeMode) => this.showPractice(items, index, m),
     }
     this.mount((root) =>
       effective === 'kiezen'
