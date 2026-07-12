@@ -32,6 +32,11 @@ describe('pronounceText', () => {
     expect(pronounceText(sum)).toBe('twee plus drie is vijf')
   })
 
+  it('says "ij" for the letter y, not the formal "ypsilon"', () => {
+    expect(pronounceText(letter('y'))).toBe('ij')
+    expect(pronounceText(letter('Y'))).toBe('ij')
+  })
+
   it('honours an explicit say override', () => {
     expect(pronounceText({ ...letter('a'), say: 'aap' })).toBe('aap')
   })

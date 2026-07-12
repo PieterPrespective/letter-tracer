@@ -21,6 +21,15 @@ function numberWord(n: number | string): string {
   return DIGIT_WORD[String(n)] ?? String(n)
 }
 
+/**
+ * Letters whose Dutch TTS *name* is unfamiliar to young children, overridden to
+ * the name kids actually use. `y` is formally "ypsilon" / "i-grec", but children
+ * learn it as "ij".
+ */
+export const LETTER_SAY: Record<string, string> = {
+  y: 'ij',
+}
+
 /** The text TTS should speak for an item. An explicit `say` always wins. */
 export function pronounceText(item: ContentItem): string {
   if (item.say) return item.say
@@ -36,6 +45,6 @@ export function pronounceText(item: ContentItem): string {
     case 'letter':
     default:
       // TTS reads the letter name in nl-NL; klank clips come in phase 2.
-      return item.prompt
+      return LETTER_SAY[item.prompt.toLowerCase()] ?? item.prompt
   }
 }

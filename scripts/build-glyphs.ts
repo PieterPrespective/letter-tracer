@@ -147,7 +147,7 @@ const lower: Glyph[] = [
   G('f', [join([arc(560, 330, 150, 150, -30, -180, 14), [{ x: 410, y: 330 }, { x: 410, y: BASE }]]), seg([[300, 470], [560, 470]])]),
   G('g', [
     join([arc(500, xMid, 170, 200, -90, -450, 32)], 'Eerst het rondje, linksom'),
-    seg([[670, XT], [670, DESC]], 'Staart recht naar beneden'),
+    join([[{ x: 670, y: XT }, { x: 670, y: 850 }], arc(540, 850, 130, 110, 0, 150, 12)], 'Staart omlaag, haakje naar links'),
   ]),
   G('h', [seg([[330, CAP], [330, BASE]]), join([[{ x: 330, y: 500 }], arc(490, 500, 165, 150, 180, 360, 16), [{ x: 655, y: BASE }]], 'Boogje omhoog en naar beneden')]),
   G('i', [seg([[500, XT], [500, BASE]]), seg([[500, 250], [500, 258]], 'De stip')]),
