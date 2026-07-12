@@ -18,7 +18,9 @@ import { scoreGlyph } from '../../tracing/scoring'
 import { playCelebrate, playStrokeDone, unlockAudio } from '../../util/audio'
 import { cancelSpeech, pronounceItem } from '../../util/speech'
 import { canvasColors, onThemeChange } from '../../theme'
-import { getSettings } from '../../state/settings'
+import { getSettings, type PracticeMode } from '../../state/settings'
+import { canChoose } from '../../model/select-game'
+import { modeToggleHTML, wireModeToggle } from '../components/mode-toggle'
 import type { Transform } from '../../geometry/box'
 import type { ContentItem } from '../../model/types'
 
@@ -28,6 +30,7 @@ export interface TraceScreenOptions {
   debug?: boolean
   onBack: () => void
   onNavigate: (index: number) => void
+  onSetMode?: (mode: PracticeMode) => void
 }
 
 const TYPE_LABEL: Record<string, string> = { letter: 'Letter', number: 'Cijfer', word: 'Woord', sum: 'Som' }
@@ -60,6 +63,7 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
         <button id="say" class="round" type="button" aria-label="Uitspraak">🔊</button>
         <button id="clear" class="round" type="button" aria-label="Opnieuw">↺</button>
       </header>
+      ${opts.onSetMode && canChoose(item) ? modeToggleHTML('overtrekken') : ''}
       <div id="wordstrip" class="wordstrip" hidden></div>
       <canvas id="trace"></canvas>
       <div id="fingers" class="fingers" hidden></div>
@@ -261,6 +265,8 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
   const detachPointer = attachPointerInput(surface, () => engine, onChange)
   const onFirstDown = () => unlockAudio()
   canvas.addEventListener('pointerdown', onFirstDown, { once: true })
+
+  if (opts.onSetMode) wireModeToggle(root, 'overtrekken', opts.onSetMode)
 
   $('#back').addEventListener('click', opts.onBack)
   $('#say').addEventListener('click', () => pronounceItem(item))

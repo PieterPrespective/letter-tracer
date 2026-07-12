@@ -4,6 +4,9 @@
 
 export type ThemeSetting = 'system' | 'light' | 'dark'
 
+/** How a word/sum is practised: trace it, or assemble the answer in wheels. */
+export type PracticeMode = 'overtrekken' | 'kiezen'
+
 export interface Settings {
   muted: boolean
   speech: boolean
@@ -12,10 +15,19 @@ export interface Settings {
   voiceURI: string
   /** Force focused one-glyph-at-a-time tracing (big letters). */
   groteLetters: boolean
+  /** Last-used practice mode for words/sums; a sensible default when opening a tile. */
+  mode: PracticeMode
 }
 
 const KEY = 'lt-settings'
-const DEFAULTS: Settings = { muted: false, speech: true, theme: 'system', voiceURI: '', groteLetters: false }
+const DEFAULTS: Settings = {
+  muted: false,
+  speech: true,
+  theme: 'system',
+  voiceURI: '',
+  groteLetters: false,
+  mode: 'overtrekken',
+}
 
 let cache: Settings | null = null
 

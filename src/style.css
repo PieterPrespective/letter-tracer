@@ -7,6 +7,8 @@
   --accent-2: #6c9bd1;
   --line: rgba(0, 0, 0, 0.1);
   --success: #2f6b3f;
+  --ok: #2f6b3f;
+  --bad: #c8442e;
   --field-bg: #ffffff;
   --toast-bg: #3a3226;
   /* Canvas tokens — read by the renderer (src/render/theme.ts). */
@@ -32,6 +34,8 @@
     --accent-2: #8fb6e0;
     --line: rgba(255, 255, 255, 0.14);
     --success: #7fd39a;
+    --ok: #7fd39a;
+    --bad: #f0896f;
     --field-bg: #322e29;
     --toast-bg: #38332c;
     --road: #3a352c;
@@ -52,6 +56,8 @@
   --accent-2: #8fb6e0;
   --line: rgba(255, 255, 255, 0.14);
   --success: #7fd39a;
+  --ok: #7fd39a;
+  --bad: #f0896f;
   --field-bg: #322e29;
   --toast-bg: #38332c;
   --road: #3a352c;
@@ -334,6 +340,206 @@ button {
 
 .next-btn:active {
   transform: scale(0.97);
+}
+
+/* ---- Practice-mode toggle (Overtrekken / Kiezen) ------------------------- */
+.mode-row {
+  display: flex;
+  justify-content: center;
+}
+
+.mode-row .segmented {
+  margin-top: 0;
+  max-width: 420px;
+  width: 100%;
+}
+
+.mode-toggle button {
+  font-size: 0.95rem;
+}
+
+/* ---- Choose ("Kies") screen ---------------------------------------------- */
+.choose-screen {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: max(12px, env(safe-area-inset-top)) 16px 16px;
+  gap: 10px;
+}
+
+.choose-prompt {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 2px var(--line);
+  padding: 12px;
+  overflow: hidden;
+}
+
+.choose-emoji {
+  font-size: clamp(80px, 26vh, 200px);
+  line-height: 1;
+}
+
+.choose-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.choose-prompt .fingers {
+  color: var(--hand);
+}
+
+.wheels {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.choose-tray {
+  flex-direction: column;
+  gap: 8px;
+}
+
+.choose-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ghost-btn {
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 1rem;
+  padding: 12px 20px;
+  min-height: 48px;
+}
+
+.celebrate-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ---- Scroll selector (wheel) --------------------------------------------- */
+.scroll-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.wheel-btn {
+  width: 52px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.wheel-btn:disabled {
+  opacity: 0.4;
+}
+
+.wheel-window {
+  position: relative;
+  width: 60px;
+  height: 168px; /* 3 × ITEM_H (56px) */
+  border-radius: 14px;
+  background: var(--field-bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+  overflow: hidden;
+}
+
+.wheel-viewport {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  outline: none;
+  touch-action: pan-y;
+}
+
+.wheel-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.wheel-viewport:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent-2);
+  border-radius: 14px;
+}
+
+.wheel-track {
+  padding: 56px 0; /* one ITEM_H top and bottom so ends can centre */
+}
+
+.wheel-item {
+  height: 56px;
+  scroll-snap-align: center;
+  display: grid;
+  place-items: center;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--muted);
+  opacity: 0.55;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.wheel-item.selected {
+  color: var(--ink);
+  opacity: 1;
+  transform: scale(1.12);
+}
+
+.wheel-band {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 56px;
+  height: 56px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 2px var(--accent-2);
+  pointer-events: none;
+}
+
+.scroll-selector.correct .wheel-band {
+  box-shadow: inset 0 0 0 2px var(--ok);
+}
+
+.scroll-selector.correct .wheel-window {
+  box-shadow: inset 0 0 0 2px var(--ok);
+}
+
+.scroll-selector.correct .wheel-item.selected {
+  color: var(--ok);
+}
+
+.scroll-selector.wrong .wheel-band {
+  box-shadow: inset 0 0 0 2px var(--bad);
+}
+
+.scroll-selector.wrong .wheel-window {
+  box-shadow: inset 0 0 0 2px var(--bad);
 }
 
 /* ---- Editor -------------------------------------------------------------- */
@@ -656,12 +862,20 @@ button {
 
 /* Compact chrome on small screens (phones) so the canvas keeps its height. */
 @media (max-width: 480px) {
-  .trace-screen {
+  .trace-screen,
+  .choose-screen {
     padding: max(8px, env(safe-area-inset-top)) 10px 10px;
     gap: 6px;
   }
   .hud {
     gap: 8px;
+  }
+  .mode-toggle button {
+    font-size: 0.85rem;
+    padding: 8px 4px;
+  }
+  .wheels {
+    gap: 6px;
   }
   .hud h1 {
     font-size: 1.1rem;
