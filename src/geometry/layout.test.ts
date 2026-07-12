@@ -32,7 +32,7 @@ describe('layoutGlyphs', () => {
 })
 
 describe('chooseTraceMode', () => {
-  const threshold = MIN_GLYPH_CM * CM_TO_CSS_PX // ~113px
+  const threshold = MIN_GLYPH_CM * CM_TO_CSS_PX // ~189px (5cm)
 
   const rowGlyphPx = (count: number, w: number, h: number) => GLYPH_SIZE * layoutGlyphs(count, w, h)[0].scale
 
@@ -45,7 +45,7 @@ describe('chooseTraceMode', () => {
     expect(chooseTraceMode(9999, true, 3)).toBe('focused')
   })
 
-  it('switches to focused below the ~3cm glyph height', () => {
+  it('switches to focused below the ~5cm glyph height', () => {
     expect(chooseTraceMode(threshold - 1, false, 5)).toBe('focused')
     expect(chooseTraceMode(threshold + 1, false, 5)).toBe('row')
   })

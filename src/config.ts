@@ -12,9 +12,11 @@ export const CM_TO_CSS_PX = 96 / 2.54
 /**
  * Below this on-screen glyph height, the row layout is too small to trace
  * comfortably, so we switch to focused (one-glyph-at-a-time) mode. Real-world
- * target: a glyph should be at least ~3 cm tall. See Prompts/lt-04.
+ * target: a glyph should be at least ~5 cm tall. (The 96px/in ↔ cm conversion
+ * is nominal — on phones this is a heuristic, tuned up from 3 cm so short words
+ * like "aap" also go focused on a phone.) See Prompts/lt-04.
  */
-export const MIN_GLYPH_CM = 3
+export const MIN_GLYPH_CM = 5
 
 export interface TraceConfig {
   /** Base hit-test tolerance as a fraction of GLYPH_SIZE. */
