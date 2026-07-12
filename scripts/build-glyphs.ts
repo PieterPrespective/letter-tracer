@@ -71,15 +71,20 @@ const digits: Glyph[] = [
   G('5', [
     join([[{ x: 610, y: 180 }, { x: 360, y: 180 }, { x: 360, y: 450 }], arc(490, 600, 205, 175, -145, 130, 24)], 'Streep, omlaag, dan de buik'),
   ]),
-  G('6', [join([arc(560, 300, 170, 150, -30, -180, 14), arc(470, 600, 190, 190, 180, 540, 30)], 'Van boven naar de bocht')]),
+  G('6', [
+    join(
+      [arc(500, 500, 185, 350, -60, -180, 18), arc(505, 600, 180, 180, 180, -180, 30)],
+      'In één keer: haak omlaag en rond',
+    ),
+  ]),
   G('7', [seg([[320, 180], [680, 180], [430, BASE]])]),
   G('8', [
     join([arc(490, 335, 135, 135, -90, 270, 24)], 'Rondje boven'),
     join([arc(490, 610, 140, 140, -90, 270, 26)], 'Rondje onder'),
   ]),
   G('9', [
-    seg([[640, 175], [640, 560], [600, BASE]], 'Staart naar beneden'),
-    join([arc(640, 340, 175, 165, 270, 90, 24)], 'Boog naar links'),
+    join([arc(500, 355, 170, 185, -90, -450, 32)], 'Eerst het rondje, linksom'),
+    seg([[665, 355], [620, BASE]], 'Dan de staart naar beneden'),
   ]),
 ]
 
