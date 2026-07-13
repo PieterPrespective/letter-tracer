@@ -21,16 +21,28 @@ const sum = (a: number, op: '+' | '-', b: number): ContentItem => ({
 })
 
 describe('wordPuzzle', () => {
-  it('makes one letter slot per character with a–z choices', () => {
+  it('makes one letter slot per character, each a 10-letter shortlist with the answer', () => {
     const p = wordPuzzle(word('boom', { kind: 'emoji', value: '🌳' }))
     expect(p.slots.map((s) => s.answer)).toEqual(['b', 'o', 'o', 'm'])
     expect(p.answer).toBe('boom')
     expect(p.prompt).toEqual({ kind: 'image', image: { kind: 'emoji', value: '🌳' }, word: 'boom' })
     for (const s of p.slots) {
       expect(s.kind).toBe('letter')
-      expect(s.choices).toHaveLength(26)
+      expect(s.choices).toHaveLength(10)
       expect(s.choices).toContain(s.answer)
+      expect(new Set(s.choices).size).toBe(10) // no duplicates
     }
+  })
+
+  it('gives a deterministic shortlist (same order across rebuilds)', () => {
+    const a = wordPuzzle(word('kat'))
+    const b = wordPuzzle(word('kat'))
+    expect(a.slots.map((s) => s.choices)).toEqual(b.slots.map((s) => s.choices))
+  })
+
+  it('varies the shortlist per slot, incl. repeated letters', () => {
+    const p = wordPuzzle(word('boom')) // the two "o" slots (index 1 and 2)
+    expect(p.slots[1].choices).not.toEqual(p.slots[2].choices)
   })
 
   it('lowercases and keeps repeated letters', () => {

@@ -6,8 +6,9 @@
 
 import { indexForOffset, offsetForIndex } from './wheel-snap'
 
-/** Row height in CSS px; the viewport shows three rows (one above/below). */
-export const ITEM_H = 56
+/** Row height in CSS px; the viewport shows three rows (one above/below).
+ *  Must match the CSS (.wheel-item height, .wheel-track padding, .wheel-band). */
+export const ITEM_H = 64
 
 export interface ScrollSelectorOptions {
   choices: string[]
