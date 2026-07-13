@@ -17,6 +17,7 @@ import { handSVG } from '../../render/hand'
 import { scoreGlyph } from '../../tracing/scoring'
 import { playCelebrate, playStrokeDone, unlockAudio } from '../../util/audio'
 import { cancelSpeech, pronounceItem } from '../../util/speech'
+import { sayWithHint } from '../say'
 import { canvasColors, onThemeChange } from '../../theme'
 import { getSettings, type PracticeMode } from '../../state/settings'
 import { canChoose } from '../../model/select-game'
@@ -269,7 +270,7 @@ export function createTraceScreen(root: HTMLElement, opts: TraceScreenOptions): 
   if (opts.onSetMode) wireModeToggle(root, 'overtrekken', opts.onSetMode)
 
   $('#back').addEventListener('click', opts.onBack)
-  $('#say').addEventListener('click', () => pronounceItem(item))
+  $('#say').addEventListener('click', () => sayWithHint(item))
   $('#clear').addEventListener('click', () => {
     current = 0
     engine = new TraceEngine(glyphs[current])

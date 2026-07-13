@@ -51,20 +51,28 @@ export function onVoicesChanged(fn: () => void): () => void {
   return () => voiceListeners.delete(fn)
 }
 
-/** Speak Dutch text with a Dutch voice. Returns false (and stays silent) if no
+/** Why a pronounce attempt produced (or didn't produce) sound. */
+export type SpeakResult = 'clip' | 'spoken' | 'off' | 'no-voice' | 'unavailable'
+
+/** Speak Dutch text with a Dutch voice. Stays silent (and reports why) if no
  *  Dutch voice is available — we never mispronounce with an English voice. */
-export function speak(text: string): boolean {
+export function speak(text: string): SpeakResult {
   const s = synth()
-  if (!s || !text) return false
+  if (!s || !text) return 'unavailable'
+  // On Android voices can arrive late; re-pull if our cache is still empty so a
+  // first tap isn't wrongly treated as "no voice".
+  if (voices.length === 0) refreshVoices()
   const voice = chooseDutchVoice(voices, getSettings().voiceURI)
-  if (!voice) return false
-  s.cancel() // avoid overlapping utterances
+  if (!voice) return 'no-voice'
+  // Only cancel when something is actually playing: on Android a cancel()
+  // immediately followed by speak() can swallow the new utterance (silence).
+  if (s.speaking || s.pending) s.cancel()
   const u = new SpeechSynthesisUtterance(text)
   u.voice = voice
   u.lang = voice.lang || 'nl-NL'
   u.rate = 0.9 // a touch slower for kids
   s.speak(u)
-  return true
+  return 'spoken'
 }
 
 export function cancelSpeech(): void {
@@ -79,12 +87,13 @@ function playClip(src: string): void {
   }
 }
 
-/** Pronounce a content item if speech is enabled: bundled clip → Dutch TTS. */
-export function pronounceItem(item: ContentItem): void {
-  if (!getSettings().speech) return
+/** Pronounce a content item if speech is enabled: bundled clip → Dutch TTS.
+ *  Returns why sound was (or wasn't) produced, so the UI can hint the parent. */
+export function pronounceItem(item: ContentItem): SpeakResult {
+  if (!getSettings().speech) return 'off'
   if (item.audioSrc) {
     playClip(item.audioSrc)
-    return
+    return 'clip'
   }
-  speak(pronounceText(item))
+  return speak(pronounceText(item))
 }

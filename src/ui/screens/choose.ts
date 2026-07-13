@@ -12,6 +12,7 @@ import { handSVG } from '../../render/hand'
 import { FeedbackLayer } from '../../render/feedback'
 import { playCelebrate, unlockAudio } from '../../util/audio'
 import { cancelSpeech, pronounceItem } from '../../util/speech'
+import { sayWithHint } from '../say'
 import type { PracticeMode } from '../../state/settings'
 import type { ContentItem } from '../../model/types'
 
@@ -187,7 +188,7 @@ export function createChooseScreen(root: HTMLElement, opts: ChooseScreenOptions)
   revealBtn.addEventListener('click', onReveal)
   nextBtn.addEventListener('click', () => opts.onNavigate((opts.index + 1) % opts.items.length))
   $('#back').addEventListener('click', opts.onBack)
-  $('#say').addEventListener('click', () => pronounceItem(item))
+  $('#say').addEventListener('click', () => sayWithHint(item))
 
   const onFirstDown = () => unlockAudio()
   root.addEventListener('pointerdown', onFirstDown, { once: true })
