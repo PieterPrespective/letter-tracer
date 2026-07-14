@@ -6,7 +6,9 @@ import type { ContentItem } from './types'
 
 export const DIGIT_WORD: Record<string, string> = {
   '0': 'nul',
-  '1': 'een',
+  // "één" (accented) forces the numeral /eːn/; plain "een" is read as the
+  // article "un".
+  '1': 'één',
   '2': 'twee',
   '3': 'drie',
   '4': 'vier',
@@ -32,6 +34,8 @@ function numberWord(n: number | string): string {
  */
 export const LETTER_SAY: Record<string, string> = {
   y: 'ij',
+  // Bare "e" is read as the schwa "eh"; "ee" gives the long-e letter name.
+  e: 'ee',
   i: 'ie',
   v: 'vee',
   x: 'iks',

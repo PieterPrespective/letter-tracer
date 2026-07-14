@@ -16,6 +16,15 @@ describe('pronounceText', () => {
     expect(pronounceText(number('9'))).toBe('negen')
   })
 
+  it('reads 1 as the numeral "één", not the article "een"', () => {
+    expect(pronounceText(number('1'))).toBe('één')
+  })
+
+  it('reads the letter e as the long-e name "ee", not the schwa', () => {
+    expect(pronounceText(letter('e'))).toBe('ee')
+    expect(pronounceText(letter('E'))).toBe('ee')
+  })
+
   it('reads a word as-is', () => {
     expect(pronounceText({ ...base, id: 'w', type: 'word', prompt: 'kat', answer: 'kat' })).toBe('kat')
   })

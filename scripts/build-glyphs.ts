@@ -79,8 +79,8 @@ const digits: Glyph[] = [
   ]),
   G('7', [seg([[320, 180], [680, 180], [430, BASE]])]),
   G('8', [
-    join([arc(490, 335, 135, 135, -90, 270, 24)], 'Rondje boven'),
-    join([arc(490, 610, 140, 140, -90, 270, 26)], 'Rondje onder'),
+    join([arc(490, 335, 135, 135, -90, -450, 24)], 'Rondje boven, linksom'),
+    join([arc(490, 610, 140, 140, -90, -450, 26)], 'Rondje onder, linksom'),
   ]),
   G('9', [
     join([arc(500, 355, 170, 185, -90, -450, 32)], 'Eerst het rondje, linksom'),
