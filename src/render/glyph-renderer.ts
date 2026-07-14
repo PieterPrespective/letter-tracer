@@ -102,16 +102,23 @@ function drawGlyph(
   }
   ctx.setLineDash([])
 
-  // The child's ink on the active glyph + the start dot for the current stroke.
+  // The active glyph's ink + the start dot for the current stroke. A *completed*
+  // stroke is drawn as its ideal (full) path, not the child's raw trail: the
+  // trail stops ~92% along (the completion threshold), which leaves closed
+  // shapes looking open — e.g. p's bowl not meeting the stem — teaching the
+  // wrong thing. Snapping finished strokes to the ideal shows them properly closed.
   if (mode === 'active' && engine) {
-    ctx.strokeStyle = c.ink
     ctx.lineWidth = 10
-    for (const trail of engine.completedTrails) {
-      if (trail.length < 2) continue
-      pathTo(ctx, trail, t)
+    ctx.strokeStyle = c.ink
+    for (let i = 0; i < engine.completedTrails.length; i++) {
+      pathTo(ctx, strokes[i].points, t)
       ctx.stroke()
     }
-    if (engine.acceptedTrail.length >= 2) {
+    if (engine.status === 'stroke-complete') {
+      // Current stroke just finished (pen still down) — close it immediately.
+      pathTo(ctx, strokes[engine.currentStroke].points, t)
+      ctx.stroke()
+    } else if (engine.acceptedTrail.length >= 2) {
       ctx.strokeStyle = c.inkActive
       pathTo(ctx, engine.acceptedTrail, t)
       ctx.stroke()

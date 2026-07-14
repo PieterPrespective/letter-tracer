@@ -37,6 +37,18 @@ describe('pronounceText', () => {
     expect(pronounceText(letter('Y'))).toBe('ij')
   })
 
+  it('spells Roman-numeral letters as names, not ordinals (both cases)', () => {
+    // "I"→"de eerste", "V"→"de vijfde", "X"→"de tiende" without these overrides.
+    expect(pronounceText(letter('I'))).toBe('ie')
+    expect(pronounceText(letter('i'))).toBe('ie')
+    expect(pronounceText(letter('V'))).toBe('vee')
+    expect(pronounceText(letter('X'))).toBe('iks')
+    expect(pronounceText(letter('L'))).toBe('el')
+    expect(pronounceText(letter('C'))).toBe('see')
+    expect(pronounceText(letter('D'))).toBe('dee')
+    expect(pronounceText(letter('M'))).toBe('em')
+  })
+
   it('honours an explicit say override', () => {
     expect(pronounceText({ ...letter('a'), say: 'aap' })).toBe('aap')
   })

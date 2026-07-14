@@ -22,12 +22,23 @@ function numberWord(n: number | string): string {
 }
 
 /**
- * Letters whose Dutch TTS *name* is unfamiliar to young children, overridden to
- * the name kids actually use. `y` is formally "ypsilon" / "i-grec", but children
- * learn it as "ij".
+ * Explicit spoken forms for letters the Dutch TTS would otherwise mispronounce.
+ * Two cases:
+ *  - `y` is formally "ypsilon" / "i-grec", but children learn it as "ij".
+ *  - The Roman-numeral letters (i, v, x, l, c, d, m) are read by the engine as
+ *    ordinals when they stand alone ("I" → "de eerste", "V" → "de vijfde",
+ *    "X" → "de tiende"), so we spell out their Dutch letter names instead.
+ * Keyed lowercase; applied to both cases (the letter name doesn't depend on case).
  */
 export const LETTER_SAY: Record<string, string> = {
   y: 'ij',
+  i: 'ie',
+  v: 'vee',
+  x: 'iks',
+  l: 'el',
+  c: 'see',
+  d: 'dee',
+  m: 'em',
 }
 
 /** The text TTS should speak for an item. An explicit `say` always wins. */
