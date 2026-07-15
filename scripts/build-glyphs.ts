@@ -234,13 +234,65 @@ function glyphFor(ch: string): Glyph {
   return { char: g.char, strokes: g.strokes, metrics: METRICS }
 }
 
+// Dutch starter words (Veilig Leren Lezen / kim-versie ordering), each with a
+// picture. Letters that the method writes as one klank (ui, aa, oe, …) are just
+// individual glyphs here — `[...'muis']` → m,u,i,s. Words with no clean emoji
+// in the source list are omitted. See the uploaded startwoorden list.
 const WORD_EMOJI: Record<string, string> = {
-  aap: '🐵',
-  boom: '🌳',
-  kat: '🐱',
-  maan: '🌙',
-  roos: '🌹',
-  vis: '🐟',
+  // kern start (i, k, m, s)
+  ik: '🙋', kim: '👧', mis: '❌', sim: '📱',
+  // kern 1 (p, aa, r, e, v)
+  vis: '🐟', aap: '🐵', rem: '🛑', kip: '🐔', kaas: '🧀', mes: '🔪', sip: '😞', vaas: '🏺', raak: '🎯',
+  // kern 2 (n, t, ee, b, oo)
+  maan: '🌙', pet: '🧢', boot: '⛵', been: '🦵', roos: '🌹', pen: '🖊️', teen: '🦶', boom: '🌳', net: '🥅',
+  peer: '🍐', noot: '🥜', beer: '🐻', poot: '🐾', mees: '🐦', boon: '🫘', veer: '🪶', meet: '📏',
+  // kern 3 (d, oe, z, ij, h)
+  zee: '🌊', doos: '📦', ijs: '🍦', koe: '🐄', haar: '💇', zes: '6️⃣', hoed: '👒', voet: '🦶', heet: '🥵',
+  zeep: '🧼', boek: '📖', hijs: '🏗️', hoek: '📐', zit: '🪑',
+  // kern 4 (w, o, a, u, j)
+  zon: '☀️', jas: '🧥', bus: '🚌', kat: '🐱', sok: '🧦', mus: '🐦', bal: '⚽', vos: '🦊', man: '👨', bot: '🦴',
+  web: '🕸️', pan: '🍳', wol: '🧶', nat: '💦', bos: '🌲', zak: '👝', dak: '🏠', tak: '🌿',
+  // kern 5 (eu, ie, l, ou, uu)
+  vuur: '🔥', ziek: '🤒', deur: '🚪', hout: '🪵', lip: '👄', neus: '👃', muur: '🧱', zout: '🧂', bel: '🔔',
+  loep: '🔍', kous: '🧦', reus: '🧌', les: '🏫',
+  // kern 6 (g, ui, au, f, ei)
+  muis: '🐭', geit: '🐐', mug: '🦟', duif: '🕊️', ei: '🥚', huis: '🏠', fee: '🧚', duim: '👍', gat: '🕳️',
+  vijf: '5️⃣', bui: '🌧️', geel: '🟡', fout: '❌', ui: '🧅', saus: '🥣',
+  // kern 7 (klusters, ng, sch)
+  ster: '⭐', klok: '🕰️', bloem: '🌸', trap: '🪜', ring: '💍', stoel: '🪑', slak: '🐌', schip: '🚢',
+  vlag: '🚩', spin: '🕷️', zwaan: '🦢', tong: '👅', brug: '🌉', melk: '🥛', kraan: '🚰', wolk: '☁️',
+  fles: '🍾', berg: '⛰️', tent: '⛺', vork: '🍴', school: '🏫', arm: '💪',
+  // kern 8 (eind -d, nk, ch(t), schr, verkleinwoorden)
+  hond: '🐕', brood: '🍞', hand: '✋', krant: '📰', paard: '🐴', licht: '💡', plant: '🪴', bank: '🛋️',
+  strand: '🏖️', nacht: '🌃', mand: '🧺', schrift: '📓', visje: '🐟', huisje: '🏠',
+  // kern 9–11 (samenstellingen, twee lettergrepen)
+  haai: '🦈', appel: '🍎', vlinder: '🦋', konijn: '🐰', banaan: '🍌', leeuw: '🦁', sneeuw: '❄️',
+  sleutel: '🗝️', spiegel: '🪞', voetbal: '⚽', koning: '👑', ketting: '📿', vrolijk: '😄', regenboog: '🌈',
+}
+
+/** The main vowel cluster of a word — for spreading vowels across the list. */
+function vowelKey(word: string): string {
+  const digraphs = ['aai', 'ooi', 'oei', 'eeuw', 'ieuw', 'aa', 'ee', 'oo', 'oe', 'ie', 'ui', 'ou', 'ei', 'ij', 'eu', 'uu', 'au']
+  for (const d of digraphs) if (word.includes(d)) return d
+  const m = word.match(/[aeiou]/)
+  return m ? m[0] : 'x'
+}
+
+/** Round-robin words across vowel groups so the same vowel rarely repeats
+ *  back-to-back when a child steps through the list. Deterministic. */
+function mixByVowel(words: string[]): string[] {
+  const groups = new Map<string, string[]>()
+  for (const w of words) {
+    const g = groups.get(vowelKey(w)) ?? []
+    g.push(w)
+    groups.set(vowelKey(w), g)
+  }
+  const buckets = [...groups.values()].sort((a, b) => b.length - a.length)
+  const out: string[] = []
+  for (let round = 0; out.length < words.length; round++) {
+    for (const b of buckets) if (round < b.length) out.push(b[round])
+  }
+  return out
 }
 
 function wordItem(word: string): ContentItem {
@@ -272,7 +324,7 @@ function sumItem(a: number, op: '+' | '-', b: number): ContentItem {
   }
 }
 
-const words = ['aap', 'boom', 'kat', 'maan', 'roos', 'vis'].map(wordItem)
+const words = mixByVowel(Object.keys(WORD_EMOJI)).map(wordItem)
 const sums: ContentItem[] = [
   sumItem(1, '+', 2),
   sumItem(2, '+', 3),

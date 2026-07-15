@@ -19,8 +19,8 @@ function traceIdeal(glyph: Glyph): TraceEngine {
 describe('base content pack', () => {
   it('parses with no warnings and has the full base set', () => {
     expect(baseWarnings).toEqual([])
-    // 26 + 26 letters + 10 digits + 3 operators + 6 words + 7 sums
-    expect(baseContent.items).toHaveLength(78)
+    // 26 + 26 letters + 10 digits + 3 operators + 140 words + 7 sums
+    expect(baseContent.items).toHaveLength(212)
   })
 
   it('includes traceable words and sums composed of base glyphs', () => {
